@@ -272,7 +272,8 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
             ghostID: entry.id,
             state: entry.state.rawValue,
             label: entry.label,
-            lastActivityAt: entry.lastActivity.map { $0.timeIntervalSince1970 * 1000 }
+            lastActivityAt: entry.lastActivity.map { $0.timeIntervalSince1970 * 1000 },
+            lifecycle: entry.lifecycle.rawValue
         )
     }
 

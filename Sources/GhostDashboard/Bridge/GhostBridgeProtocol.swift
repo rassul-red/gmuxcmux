@@ -56,12 +56,22 @@ public struct GhostEntryState: Codable, Equatable {
     /// Epoch milliseconds; nil if the ghost has never recorded activity.
     /// JS consumes this with `new Date(ms)`.
     public let lastActivityAt: Double?
+    /// Lifecycle phase string — one of `walking|working|idle|warning|despawning`.
+    /// Optional for backward compatibility with v1 renderers (Issue #14).
+    public let lifecycle: String?
 
-    public init(ghostID: String, state: String, label: String, lastActivityAt: Double? = nil) {
+    public init(
+        ghostID: String,
+        state: String,
+        label: String,
+        lastActivityAt: Double? = nil,
+        lifecycle: String? = nil
+    ) {
         self.ghostID = ghostID
         self.state = state
         self.label = label
         self.lastActivityAt = lastActivityAt
+        self.lifecycle = lifecycle
     }
 }
 

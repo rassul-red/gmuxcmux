@@ -45,6 +45,10 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
         self.bridgeHost.webView = self
         translatesAutoresizingMaskIntoConstraints = false
         setValue(false, forKey: "drawsBackground")
+        // Disable WebKit's built-in pinch zoom so the SwiftUI
+        // `MagnificationGesture` driving `GhostCanvasZoomView` (Issue #16) is
+        // not swallowed by WKWebView's responder chain.
+        allowsMagnification = false
         navigationDelegate = self
         subscribeToActivityGate()
         attachRosterBridge()

@@ -11,12 +11,22 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
     public var state: GhostState
     public var label: String
     public var lastActivity: Date?
+    /// Lifecycle phase for the renderer (Issue #14). Defaults to `.idle` so
+    /// existing callers and tests stay source-compatible.
+    public var lifecycle: GhostLifecycle
 
-    public init(id: String, state: GhostState = .Idle, label: String = "", lastActivity: Date? = nil) {
+    public init(
+        id: String,
+        state: GhostState = .Idle,
+        label: String = "",
+        lastActivity: Date? = nil,
+        lifecycle: GhostLifecycle = .idle
+    ) {
         self.id = id
         self.state = state
         self.label = label
         self.lastActivity = lastActivity
+        self.lifecycle = lifecycle
     }
 
     public var ghostID: String { id }
@@ -160,20 +170,103 @@ public final class GhostRosterManager: ObservableObject {
         }
     }
 
+    /// Min dwell time (in main-queue) between emitting the `.despawning`
+    /// snapshot and dropping the roster entry. Must exceed the bridge's
+    /// 20 ms coalesce window so the despawn delta isn't merged with the
+    /// removal delta and lost (Issue #14).
+    public static let despawnDwell: DispatchTimeInterval = .milliseconds(300)
+
     public func unregister(projectID: String) {
         stateQueue.async { [weak self] in
             guard let self else { return }
             self.dispatchPreconditionOffMain()
+            // Emit a final "despawning" snapshot so the renderer can play the
+            // disappear animation before the project is dropped (Issue #14).
+            let hadContext = self.projects[projectID] != nil
+            if let ctx = self.projects[projectID] {
+                let now = Date()
+                let despawnSnapshot = self.buildDespawnSnapshot(projectID: projectID, ctx: ctx, now: now)
+                self.commitOnMain(projectID: projectID, snapshot: despawnSnapshot)
+            }
             if let ctx = self.projects.removeValue(forKey: projectID) {
                 ctx.watcher.stop()
             }
             if self.projects.isEmpty {
                 self.stopIdleRefreshTimer()
             }
-            DispatchQueue.main.async {
+            // Wait long enough for the bridge coalesce window + a renderer
+            // animation tick before pulling the roster entry. Without this
+            // delay the removal delta clobbers the despawning delta inside
+            // the 20 ms coalesce buffer.
+            let dwell: DispatchTimeInterval = hadContext ? Self.despawnDwell : .milliseconds(0)
+            DispatchQueue.main.asyncAfter(deadline: .now() + dwell) {
                 self.roster.removeValue(forKey: projectID)
             }
         }
+    }
+
+    /// Mark a single ghost (session) as needing human intervention. Drives
+    /// the `.warning` lifecycle in the next snapshot. Issue #14.
+    public func raiseWarning(projectID: String, ghostID: String) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            self.mutateMachine(projectID: projectID, ghostID: ghostID) { machine in
+                machine.raiseWarning(at: Date())
+            }
+        }
+    }
+
+    /// Clear an active warning for a single ghost.
+    public func clearWarning(projectID: String, ghostID: String) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            self.mutateMachine(projectID: projectID, ghostID: ghostID) { machine in
+                machine.clearWarning()
+            }
+        }
+    }
+
+    private func mutateMachine(
+        projectID: String,
+        ghostID: String,
+        _ mutate: (inout GhostStateMachine) -> Void
+    ) {
+        guard var ctx = projects[projectID] else { return }
+        guard let sessionURL = ctx.orderedSessions.first(where: { url in
+            "\(projectID)#\(url.deletingPathExtension().lastPathComponent)" == ghostID
+        }) else { return }
+        var machine = ctx.sessionStates[sessionURL] ?? GhostStateMachine()
+        mutate(&machine)
+        ctx.sessionStates[sessionURL] = machine
+        let snapshot = buildSnapshot(projectID: projectID, ctx: ctx, now: Date())
+        ctx.lastSnapshot = snapshot
+        projects[projectID] = ctx
+        commitOnMain(projectID: projectID, snapshot: snapshot)
+    }
+
+    private func buildDespawnSnapshot(
+        projectID: String,
+        ctx: ProjectContext,
+        now: Date
+    ) -> ProjectGhostRoster {
+        // Same shape as `buildSnapshot` but every ghost gets `.despawning` so
+        // the renderer can play the exit animation before removal.
+        let sessions = ctx.orderedSessions.prefix(Self.maxGhostsPerProject)
+        let entries: [GhostEntry] = sessions.map { url in
+            let machine = ctx.sessionStates[url] ?? GhostStateMachine()
+            let label = ctx.sessionLabels[url] ?? ""
+            let id = "\(projectID)#\(url.deletingPathExtension().lastPathComponent)"
+            return GhostEntry(
+                id: id,
+                state: machine.currentState(now: now),
+                label: label,
+                lastActivity: machine.lastActivity,
+                lifecycle: .despawning
+            )
+        }
+        return ProjectGhostRoster(projectID: projectID, ghosts: Array(entries))
     }
 
     // MARK: - Event ingestion
@@ -218,10 +311,16 @@ public final class GhostRosterManager: ObservableObject {
 
             for name in names {
                 var machine = ctx.sessionStates[sessionKey] ?? GhostStateMachine()
+                let isFirstObservation = !ctx.orderedSessions.contains(sessionKey)
+                if isFirstObservation {
+                    // Spawn marker drives the `.walking` lifecycle for the
+                    // walkingDuration window (Issue #14).
+                    machine.markSpawned(at: event.parsedTimestamp())
+                }
                 machine.apply(toolName: name, at: event.parsedTimestamp())
                 ctx.sessionStates[sessionKey] = machine
                 ctx.sessionLabels[sessionKey] = name
-                if !ctx.orderedSessions.contains(sessionKey) {
+                if isFirstObservation {
                     ctx.orderedSessions.append(sessionKey)
                 }
                 changed = true
@@ -290,7 +389,8 @@ public final class GhostRosterManager: ObservableObject {
                 id: id,
                 state: machine.currentState(now: now),
                 label: label,
-                lastActivity: machine.lastActivity
+                lastActivity: machine.lastActivity,
+                lifecycle: machine.currentLifecycle(now: now)
             )
         }
         return ProjectGhostRoster(projectID: projectID, ghosts: Array(entries))
