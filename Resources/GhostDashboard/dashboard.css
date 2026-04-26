@@ -1,0 +1,124 @@
+/* cmux Ghost Projects dashboard — 2x2 grid styles. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #0a090e;
+  color: #e6e6f0;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+}
+
+.ghost-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+.ghost-room {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(160deg, #1a1822 0%, #110f17 100%);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: #6B8AFD;
+  transition: border-color 200ms ease;
+}
+
+.ghost-room.placeholder {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.ghost-glyph {
+  width: 80px;
+  height: 80px;
+  flex: 0 0 auto;
+  margin-top: 8px;
+  color: currentColor;
+}
+
+.ghost-glyph svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: currentColor;
+}
+
+/* State color tokens. The base color is what the SVG glyph picks up via
+   `currentColor`; the status-pill picks the same hue. */
+.ghost-room.state-idle    { color: #6B8AFD; }
+.ghost-room.state-coding  { color: #5BD68E; }
+.ghost-room.state-warning { color: #F5685A; }
+.ghost-room.state-walking { color: #F1C152; }
+
+/* Coding pulse: subtle scale; halts when lifecycle is inactive. */
+@keyframes ghost-pulse {
+  0%, 100% { transform: scale(1.0); }
+  50%      { transform: scale(1.04); }
+}
+@keyframes ghost-blink {
+  0%, 100% { opacity: 1.0; }
+  50%      { opacity: 0.35; }
+}
+
+.ghost-room.state-coding .ghost-glyph  { animation: ghost-pulse 1.6s ease-in-out infinite; }
+.ghost-room.state-warning .ghost-glyph { animation: ghost-blink 0.9s ease-in-out infinite; }
+
+body.lifecycle-inactive .ghost-glyph { animation: none !important; }
+
+.room-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6e6f0;
+  margin-top: 12px;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.room-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: currentColor;
+  color: #0a090e;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.last-activity {
+  font-size: 11px;
+  color: rgba(230, 230, 240, 0.45);
+  margin-top: 6px;
+}
+
+.ghost-room.placeholder .room-name {
+  color: rgba(230, 230, 240, 0.55);
+}
+.ghost-room.placeholder .status-pill { display: none; }
+.ghost-room.placeholder .last-activity { display: none; }

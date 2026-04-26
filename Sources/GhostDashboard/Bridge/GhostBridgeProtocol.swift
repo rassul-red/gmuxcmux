@@ -53,11 +53,15 @@ public struct GhostEntryState: Codable, Equatable {
     public let ghostID: String
     public let state: String
     public let label: String
+    /// Epoch milliseconds; nil if the ghost has never recorded activity.
+    /// JS consumes this with `new Date(ms)`.
+    public let lastActivityAt: Double?
 
-    public init(ghostID: String, state: String, label: String) {
+    public init(ghostID: String, state: String, label: String, lastActivityAt: Double? = nil) {
         self.ghostID = ghostID
         self.state = state
         self.label = label
+        self.lastActivityAt = lastActivityAt
     }
 }
 

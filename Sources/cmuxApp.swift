@@ -367,6 +367,13 @@ struct cmuxApp: App {
                             appDelegate.openPreferencesWindow(debugSource: "uiTestShowSettings")
                         }
                     }
+                    if ProcessInfo.processInfo.environment["CMUX_AUTO_SHOW_GHOST"] == "1" {
+                        // Defer to next runloop tick so the primary window finishes
+                        // its menu/menubar wiring before we open the dashboard.
+                        DispatchQueue.main.async {
+                            GhostDashboardWindowController.shared.show()
+                        }
+                    }
                 }
                 .onChange(of: appearanceMode) { _ in
                     applyAppearance()
@@ -851,6 +858,16 @@ struct cmuxApp: App {
 
                 splitCommandButton(title: String(localized: "menu.view.showNotifications", defaultValue: "Show Notifications"), shortcut: menuShortcut(for: .showNotifications)) {
                     showNotificationsPopover()
+                }
+
+                Divider()
+
+                // No keyboard shortcut for v1: per CLAUDE.md "Shortcut policy",
+                // any cmux-owned shortcut must round-trip through `KeyboardShortcutSettings`
+                // + Settings UI + settings.json + docs. Wiring is intentionally
+                // deferred until a follow-up PR that lands all four pieces.
+                Button(String(localized: "dashboard.menu.show", defaultValue: "Ghost Projects Dashboard")) {
+                    GhostDashboardWindowController.shared.show()
                 }
             }
         }

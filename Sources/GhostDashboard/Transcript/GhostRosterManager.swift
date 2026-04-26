@@ -41,7 +41,36 @@ public struct ProjectGhostRoster: Equatable, Sendable {
 public final class GhostRosterManager: ObservableObject {
     public static let maxGhostsPerProject = 5
 
+    /// Process-wide singleton consumed by `GhostDashboardWebViewHost` so the
+    /// Swift→JS bridge has a stable roster to subscribe to. Tests construct
+    /// dedicated instances via `init(...)`.
+    public static let shared = GhostRosterManager()
+
     @Published public private(set) var roster: [String: ProjectGhostRoster] = [:]
+
+    /// Optional, project-id-keyed metadata provider used by the bridge to
+    /// build snapshot tile names / cwd / status fields. Walkthrough or
+    /// workspace integration code can replace this; the default falls back to
+    /// the project id as the display name with empty cwd/status.
+    ///
+    /// Reads and writes are serialized through `metadataProviderLock` so the
+    /// bridge can read it from `coalesceQueue` while another thread updates it.
+    private let metadataProviderLock = NSLock()
+    private var _metadataProvider: (String) -> (name: String, cwd: String, status: String) = { pid in
+        (pid, "", "")
+    }
+    public var metadataProvider: (String) -> (name: String, cwd: String, status: String) {
+        get {
+            metadataProviderLock.lock()
+            defer { metadataProviderLock.unlock() }
+            return _metadataProvider
+        }
+        set {
+            metadataProviderLock.lock()
+            _metadataProvider = newValue
+            metadataProviderLock.unlock()
+        }
+    }
 
     public typealias DeltaObserver = (_ projectID: String, _ snapshot: ProjectGhostRoster) -> Void
 

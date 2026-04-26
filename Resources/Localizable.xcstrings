@@ -89886,6 +89886,23 @@
         }
       }
     },
+    "dashboard.menu.show": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ghost Projects Dashboard"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ghost Projects ダッシュボード"
+          }
+        }
+      }
+    },
     "dashboard.detail.selectedProject": {
       "extractionState": "manual",
       "localizations": {

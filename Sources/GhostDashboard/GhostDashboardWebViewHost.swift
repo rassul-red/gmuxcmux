@@ -47,7 +47,30 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
         setValue(false, forKey: "drawsBackground")
         navigationDelegate = self
         subscribeToActivityGate()
+        attachRosterBridge()
         loadDashboardAsset()
+    }
+
+    /// Subscribes the bridge host to the process-wide `GhostRosterManager`
+    /// singleton so roster mutations (project register / tool_use ingestion
+    /// from `ClaudeTranscriptWatcher`) flow into the WebView as
+    /// `ghost.snapshot.v1` / `ghost.delta.v1` envelopes. The bridge owns its
+    /// own coalescing window (20 ms) and snapshot/delta accounting; this
+    /// method only wires the inputs.
+    private func attachRosterBridge() {
+        let manager = GhostRosterManager.shared
+        // Read `metadataProvider` per-call rather than capturing it at attach
+        // time: a future caller may swap the provider on `GhostRosterManager.shared`
+        // after this WebView is initialized (e.g. when workspace metadata
+        // becomes available). The thread-safe accessor on the manager guards
+        // the closure swap.
+        bridgeHost.attach(
+            webView: self,
+            rosterManager: manager,
+            projectMetadataProvider: { [weak manager] pid in
+                manager?.metadataProvider(pid) ?? (pid, "", "")
+            }
+        )
     }
 
     deinit {
