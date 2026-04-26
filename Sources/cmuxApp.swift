@@ -336,13 +336,10 @@ struct cmuxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if UserDefaults.standard.bool(forKey: "ghostDashboardEnabled") {
-                    GhostDashboardView()
-                } else {
-                    ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
-                }
-            }
+            // Ghost Projects dashboard is the sole main view at app launch
+            // (epic #1, AC 1). The legacy ContentView is reachable only via
+            // the dashboard's terminal dock once that wiring lands.
+            GhostDashboardView()
                 .environmentObject(tabManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)

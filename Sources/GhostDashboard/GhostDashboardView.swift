@@ -1,41 +1,39 @@
 import SwiftUI
 
-/// SwiftUI shell for the Ghost Projects dashboard. Defines the 5-region
-/// layout: sidebar / center 2x2 grid (WebView) / right detail / bottom
-/// action bar / right terminal dock placeholder.
+/// SwiftUI shell for the Ghost Projects dashboard. Per epic #1 the layout is
+/// sidebar (left) + 2×2 isometric grid WebView (center, owns the bulk of the
+/// canvas) + detail / Quick Actions (right) + collapsible terminal dock
+/// (rightmost) + action bar (bottom).
 ///
-/// Real Workspace data binds in #2; action handlers wire in #5/#6; ghost
-/// state injection happens in #3/#4.
+/// The terminal dock is hidden by default (`terminalDockCollapsed = true`)
+/// so the ghost grid commands the full center column until the user opts
+/// the dock in via the action bar / shortcut. Real Workspace data binds in
+/// #2; action handlers wire in #5/#6; ghost state injection happens in #3/#4.
 struct GhostDashboardView: View {
+    @AppStorage("terminalDockCollapsed") private var terminalDockCollapsed: Bool = true
+
     var body: some View {
         VStack(spacing: 0) {
             HSplitView {
                 GhostDashboardSidebar()
                     .frame(minWidth: 200, idealWidth: 220, maxWidth: 280)
 
-                GhostDashboardCenter()
-                    .frame(minWidth: 480)
+                GhostGridWebView()
+                    .frame(minWidth: 480, minHeight: 360)
 
                 GhostDashboardRightPanel()
                     .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
+
+                if !terminalDockCollapsed {
+                    GhostTerminalDockPlaceholder()
+                        .frame(minWidth: 200, idealWidth: 280, maxWidth: 420)
+                }
             }
 
             GhostDashboardActionBar()
         }
         .frame(minWidth: 1024, minHeight: 640)
         .background(Color(nsColor: .windowBackgroundColor))
-    }
-}
-
-private struct GhostDashboardCenter: View {
-    var body: some View {
-        HSplitView {
-            GhostGridWebView()
-                .frame(minWidth: 480, minHeight: 360)
-
-            GhostTerminalDockPlaceholder()
-                .frame(minWidth: 200, idealWidth: 280, maxWidth: 420)
-        }
     }
 }
 
