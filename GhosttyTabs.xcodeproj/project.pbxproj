@@ -54,6 +54,8 @@
 		A50019A2 /* ClaudeTranscriptWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019B2 /* ClaudeTranscriptWatcher.swift */; };
 		A50019A3 /* GhostStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019B3 /* GhostStateMachine.swift */; };
 		A50019A4 /* GhostRosterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019B4 /* GhostRosterManager.swift */; };
+		A50019A5 /* GhostBridgeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019B5 /* GhostBridgeProtocol.swift */; };
+		A50019A6 /* GhostBridgeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019B6 /* GhostBridgeHost.swift */; };
 		A5001407 /* WorkspaceContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001417 /* WorkspaceContentView.swift */; };
 			A5001093 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001090 /* AppDelegate.swift */; };
 			A5001094 /* NotificationsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001091 /* NotificationsPage.swift */; };
@@ -138,6 +140,7 @@
 					46F6AC15863EC84DCD3770A2 /* TerminalAndGhosttyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02FC74F2C27127CC565B3E8C /* TerminalAndGhosttyTests.swift */; };
 					6B524A0BA34FD46A771335AB /* WorkspaceUnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8ED91A4B55D34BE6A0668 /* WorkspaceUnitTests.swift */; };
 					A50019C2 /* GhostTranscriptAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019C1 /* GhostTranscriptAdapterTests.swift */; };
+					A50019C4 /* GhostBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50019C3 /* GhostBridgeTests.swift */; };
 					063BC42CEE257D6213A2E30C /* WindowAndDragTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEE83F8394D90ACACD8E19DD /* WindowAndDragTests.swift */; };
 					1521D55DC63D5E5FC4955E31 /* ShortcutAndCommandPaletteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6083A7DAD962E287FC2FFE94 /* ShortcutAndCommandPaletteTests.swift */; };
 					CB23911D7E131E8FBC9B82B6 /* SidebarOrderingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC39DE4B96D1931C52AF7D68 /* SidebarOrderingTests.swift */; };
@@ -272,6 +275,8 @@
 		A50019B2 /* ClaudeTranscriptWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Transcript/ClaudeTranscriptWatcher.swift; sourceTree = "<group>"; };
 		A50019B3 /* GhostStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Transcript/GhostStateMachine.swift; sourceTree = "<group>"; };
 		A50019B4 /* GhostRosterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Transcript/GhostRosterManager.swift; sourceTree = "<group>"; };
+		A50019B5 /* GhostBridgeProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Bridge/GhostBridgeProtocol.swift; sourceTree = "<group>"; };
+		A50019B6 /* GhostBridgeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Bridge/GhostBridgeHost.swift; sourceTree = "<group>"; };
 		A5001417 /* WorkspaceContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceContentView.swift; sourceTree = "<group>"; };
 		A5001090 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A5001091 /* NotificationsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsPage.swift; sourceTree = "<group>"; };
@@ -352,6 +357,7 @@
 				02FC74F2C27127CC565B3E8C /* TerminalAndGhosttyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalAndGhosttyTests.swift; sourceTree = "<group>"; };
 				71F8ED91A4B55D34BE6A0668 /* WorkspaceUnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceUnitTests.swift; sourceTree = "<group>"; };
 				A50019C1 /* GhostTranscriptAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostTranscriptAdapterTests.swift; sourceTree = "<group>"; };
+				A50019C3 /* GhostBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostBridgeTests.swift; sourceTree = "<group>"; };
 				BEE83F8394D90ACACD8E19DD /* WindowAndDragTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAndDragTests.swift; sourceTree = "<group>"; };
 				6083A7DAD962E287FC2FFE94 /* ShortcutAndCommandPaletteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutAndCommandPaletteTests.swift; sourceTree = "<group>"; };
 				BC39DE4B96D1931C52AF7D68 /* SidebarOrderingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarOrderingTests.swift; sourceTree = "<group>"; };
@@ -505,6 +511,8 @@
 					A50019B2 /* ClaudeTranscriptWatcher.swift */,
 					A50019B3 /* GhostStateMachine.swift */,
 					A50019B4 /* GhostRosterManager.swift */,
+					A50019B5 /* GhostBridgeProtocol.swift */,
+					A50019B6 /* GhostBridgeHost.swift */,
 				A5001417 /* WorkspaceContentView.swift */,
 				A5001014 /* GhosttyConfig.swift */,
 				A5001015 /* GhosttyTerminalView.swift */,
@@ -647,6 +655,7 @@
 					02FC74F2C27127CC565B3E8C /* TerminalAndGhosttyTests.swift */,
 					71F8ED91A4B55D34BE6A0668 /* WorkspaceUnitTests.swift */,
 					A50019C1 /* GhostTranscriptAdapterTests.swift */,
+					A50019C3 /* GhostBridgeTests.swift */,
 					BEE83F8394D90ACACD8E19DD /* WindowAndDragTests.swift */,
 					6083A7DAD962E287FC2FFE94 /* ShortcutAndCommandPaletteTests.swift */,
 					BC39DE4B96D1931C52AF7D68 /* SidebarOrderingTests.swift */,
@@ -847,6 +856,8 @@
 						A50019A2 /* ClaudeTranscriptWatcher.swift in Sources */,
 						A50019A3 /* GhostStateMachine.swift in Sources */,
 						A50019A4 /* GhostRosterManager.swift in Sources */,
+						A50019A5 /* GhostBridgeProtocol.swift in Sources */,
+						A50019A6 /* GhostBridgeHost.swift in Sources */,
 				A5001407 /* WorkspaceContentView.swift in Sources */,
 				A5001004 /* GhosttyConfig.swift in Sources */,
 				A5001005 /* GhosttyTerminalView.swift in Sources */,
@@ -962,6 +973,7 @@
 					46F6AC15863EC84DCD3770A2 /* TerminalAndGhosttyTests.swift in Sources */,
 					6B524A0BA34FD46A771335AB /* WorkspaceUnitTests.swift in Sources */,
 					A50019C2 /* GhostTranscriptAdapterTests.swift in Sources */,
+					A50019C4 /* GhostBridgeTests.swift in Sources */,
 					063BC42CEE257D6213A2E30C /* WindowAndDragTests.swift in Sources */,
 					1521D55DC63D5E5FC4955E31 /* ShortcutAndCommandPaletteTests.swift in Sources */,
 					CB23911D7E131E8FBC9B82B6 /* SidebarOrderingTests.swift in Sources */,
