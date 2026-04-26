@@ -23,17 +23,35 @@ html, body {
   box-sizing: border-box;
 }
 
-/* Each tile is an isometric room with the office background image. */
+/* Each tile is an isometric room with the office background image.
+   The supplied 2048x2048 pixel-art reference is already split into 4 office
+   rooms; we ship each quadrant as its own slot-specific background so the
+   2x2 grid composes one continuous environment instead of four identical
+   rooms. Slot mapping mirrors `data-slot` 0..3 = TL/TR/BL/BR. */
 .ghost-room {
   position: relative;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: #110f17 url('sprites/bg/AgentOfficeBackground.png') center/cover no-repeat;
+  background-color: #110f17;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
   box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
   min-height: 0;
   min-width: 0;
   overflow: hidden;
   transition: border-color 200ms ease, opacity 200ms ease;
+}
+
+.ghost-room[data-slot="0"] { background-image: url('sprites/bg/AgentOfficeRoom-0.png'); }
+.ghost-room[data-slot="1"] { background-image: url('sprites/bg/AgentOfficeRoom-1.png'); }
+.ghost-room[data-slot="2"] { background-image: url('sprites/bg/AgentOfficeRoom-2.png'); }
+.ghost-room[data-slot="3"] { background-image: url('sprites/bg/AgentOfficeRoom-3.png'); }
+
+/* Pre-existing single-image background kept as the universal fallback for
+   tiles that ever render without a slot index. */
+.ghost-room:not([data-slot]) {
+  background-image: url('sprites/bg/AgentOfficeBackground.png');
 }
 
 .ghost-room.placeholder {
