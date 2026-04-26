@@ -1,5 +1,9 @@
 # cmux agent notes
 
+## Project memory
+
+Read `MEMORY.MD` for compact project context that is useful across sessions, including the current `cmux-gui` mode notes. `AGENTS.md` is a symlink to this file, so these instructions also apply when agents load `AGENTS.md`.
+
 ## Initial setup
 
 Run the setup script to initialize submodules and build GhosttyKit:
@@ -10,7 +14,9 @@ Run the setup script to initialize submodules and build GhosttyKit:
 
 ## Local dev
 
-After making code changes, always run the reload script with a tag to build the Debug app:
+Do not run builds locally to test agent changes unless the user explicitly asks. The user will run builds and tests at the end.
+
+When the user explicitly asks for a local build after code changes, run the reload script with a tag to build the Debug app:
 
 ```bash
 ./scripts/reload.sh --tag fix-zsh-autosuggestions

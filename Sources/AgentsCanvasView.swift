@@ -5,7 +5,7 @@ import Combine
 /// Top-level "game" canvas shown in the center of the window when GUI mode is
 /// active. Renders one room per workspace as a horizontal row inside a
 /// scrollable, pinch-zoomable world. Agents walk around their rooms when not
-/// busy and sit at their desks when running/asking.
+/// busy and park at chairs when running/asking.
 ///
 /// Snapshot-boundary rule (`CLAUDE.md`): row subviews see only immutable value
 /// snapshots + closures. World position writes happen exclusively in
@@ -205,13 +205,13 @@ struct AgentsCanvasView: View {
                 let panelId = panel.id
                 let status = currentStatus(forWorkspace: workspace, panelId: panelId)
                 let bounds = roomLocalBounds()
-                let desk = deskPosition(forPanelIndex: panelIndex)
+                let chair = chairPosition(forPanelIndex: panelIndex)
                 let seed = stableSeed(workspaceIndex: workspaceIndex, panelIndex: panelIndex, panelId: panelId)
                 drivers.append(AgentWorldDriver(
                     panelId: panelId,
                     status: status,
                     roomBounds: bounds,
-                    deskPosition: desk,
+                    chairPosition: chair,
                     seed: seed
                 ))
             }
@@ -227,7 +227,7 @@ struct AgentsCanvasView: View {
         if hasNotification {
             return .completed
         }
-        // Only sit at the desk when the shell is actually running a command —
+        // Only park at a chair when the shell is actually running a command —
         // i.e. the user has typed/launched something. Bare focus (a freshly
         // created terminal sitting at the prompt) means the agent should still
         // wander.
@@ -239,24 +239,23 @@ struct AgentsCanvasView: View {
     }
 
     /// Wander zone — the open central floor area where ghosts roam. Excludes
-    /// the perimeter where furniture (desks, bookshelves, side tables) sits.
+    /// the perimeter where furniture (chairs, bookshelves, side tables) sits.
     /// Pixel-art top-down convention: y grows down, so this carves out the
-    /// strip between the mid-row desks and the bottom decorations.
+    /// strip between the mid-row chairs and the bottom decorations.
     private func roomLocalBounds() -> CGRect {
         CGRect(x: 80, y: 320, width: roomSize.width - 160, height: 90)
     }
 
-    /// Fixed seat slots in every room. Each slot is the position where a
-    /// seated ghost sits (the chair position, not the desk top). Furniture
-    /// drawn by `roomFurniture` aligns with these.
+    /// Fixed chair slots in every room. Each slot is the position where a
+    /// busy agent parks; the room intentionally renders chairs only here.
     private static let chairSlots: [CGPoint] = [
-        CGPoint(x: 180, y: 173),   // top-left desk, chair below
-        CGPoint(x: 540, y: 173),   // top-right desk, chair below
-        CGPoint(x: 180, y: 283),   // mid-left desk, chair below
-        CGPoint(x: 540, y: 283),   // mid-right desk, chair below
+        CGPoint(x: 180, y: 173),   // top-left chair
+        CGPoint(x: 540, y: 173),   // top-right chair
+        CGPoint(x: 180, y: 283),   // mid-left chair
+        CGPoint(x: 540, y: 283),   // mid-right chair
     ]
 
-    private func deskPosition(forPanelIndex panelIndex: Int) -> CGPoint {
+    private func chairPosition(forPanelIndex panelIndex: Int) -> CGPoint {
         let slots = Self.chairSlots
         return slots[panelIndex % slots.count]
     }
@@ -292,9 +291,9 @@ struct AgentsCanvasView: View {
             let agents: [AgentsCanvasAgentSnapshot] = sorted.enumerated().map { panelIndex, panel in
                 let panelId = panel.id
                 let status = currentStatus(forWorkspace: workspace, panelId: panelId)
-                let desk = deskPosition(forPanelIndex: panelIndex)
+                let chair = chairPosition(forPanelIndex: panelIndex)
                 let state = states[panelId]
-                let pos = state?.position ?? desk
+                let pos = state?.position ?? chair
                 let arrived = state?.arrived ?? true
                 let facingLeft = state?.facingLeft ?? false
                 let isAtDesk = status.isAtDeskStatus && arrived
@@ -306,7 +305,7 @@ struct AgentsCanvasView: View {
                     role: roleStore.role(for: panelId),
                     status: status,
                     worldPosition: pos,
-                    deskPosition: desk,
+                    chairPosition: chair,
                     facingLeft: facingLeft,
                     isAtDesk: isAtDesk,
                     isWalking: isWalking
@@ -324,13 +323,11 @@ struct AgentsCanvasView: View {
         }
     }
 
-    /// Fixed office furniture layout — every room shares the same arrangement
-    /// (desks pre-built into the room, perimeter decorations, central floor
-    /// open for wandering). Order matters for layering: floor-level pieces
-    /// first, then taller pieces, so e.g. a chair behind a desk reads
-    /// correctly. Chairs are intentionally rendered before the seated ghost
-    /// (the ghost is drawn separately as an agent), and monitors/lamps after
-    /// the desk so they sit "on" the desk surface.
+    /// Fixed office furniture layout — every room shares the same arrangement:
+    /// perimeter decorations, four chair-only parking spots, and a central
+    /// floor open for wandering. Order matters for layering: floor-level
+    /// pieces first, then taller pieces. Agents are drawn separately after
+    /// room decorations.
     static let roomFurniture: [AgentRoomDecoration] = {
         // Helpers to produce deterministic UUIDs by index.
         func id(_ slot: Int) -> UUID {
@@ -350,41 +347,17 @@ struct AgentsCanvasView: View {
         add(.taskBoard, 360, 50)
         add(.serverRack, 675, 85)
 
-        // Top-left desk station (chair at chairSlots[0] = 180, 173).
+        // Top-left and top-right chair stations.
         add(.officeChair, 180, 180)
-        add(.desk, 180, 130)
-        add(.terminalMonitor, 180, 108)
-        add(.deskLamp, 220, 108)
-        add(.coffeeMug, 145, 124)
-        add(.keyboard, 180, 142)
-
-        // Top-right desk station (chair at 540, 173).
         add(.officeChair, 540, 180)
-        add(.desk, 540, 130)
-        add(.terminalMonitor, 540, 108)
-        add(.deskLamp, 580, 108)
-        add(.coffeeMug, 505, 124)
-        add(.keyboard, 540, 142)
 
-        // Plants between top desks.
+        // Plants between top chair stations.
         add(.pottedPlant, 290, 115)
         add(.pottedPlant, 430, 115)
 
-        // Mid-left desk station (chair at 180, 283).
+        // Mid-left and mid-right chair stations.
         add(.officeChair, 180, 290)
-        add(.desk, 180, 240)
-        add(.terminalMonitor, 180, 218)
-        add(.deskLamp, 220, 218)
-        add(.coffeeMug, 145, 234)
-        add(.keyboard, 180, 252)
-
-        // Mid-right desk station (chair at 540, 283).
         add(.officeChair, 540, 290)
-        add(.desk, 540, 240)
-        add(.terminalMonitor, 540, 218)
-        add(.deskLamp, 580, 218)
-        add(.coffeeMug, 505, 234)
-        add(.keyboard, 540, 252)
 
         // Side-wall floor lamps flanking the open central floor.
         add(.floorLamp, 35, 360)
@@ -464,7 +437,7 @@ struct AgentsCanvasAgentSnapshot: Identifiable, Equatable {
     let role: AgentRole
     let status: AgentStatus
     let worldPosition: CGPoint
-    let deskPosition: CGPoint
+    let chairPosition: CGPoint
     let facingLeft: Bool
     let isAtDesk: Bool
     let isWalking: Bool

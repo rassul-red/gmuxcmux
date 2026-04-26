@@ -18,7 +18,7 @@ struct AgentWorldDriver {
     let panelId: UUID
     let status: AgentStatus
     let roomBounds: CGRect       // room-local
-    let deskPosition: CGPoint    // room-local
+    let chairPosition: CGPoint   // room-local
     let seed: UInt64             // for deterministic per-agent variation
 }
 
@@ -78,7 +78,7 @@ final class AgentWorldStore: ObservableObject {
 
             // Pick / refresh the target.
             if driver.status.isAtDeskStatus {
-                state.target = driver.deskPosition
+                state.target = driver.chairPosition
             } else if state.arrived, now >= state.nextWanderAt {
                 state.target = randomTarget(in: driver.roomBounds, seed: driver.seed, now: now)
                 state.nextWanderAt = now.addingTimeInterval(

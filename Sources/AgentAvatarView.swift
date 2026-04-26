@@ -1,9 +1,7 @@
 import SwiftUI
 
-/// One ghost agent on the canvas. Renders either the standing sprite (when
-/// wandering) or the seated-on-chair sprite (`AgentWorkerSeated{Role}{State}`)
-/// when sitting at a pre-built desk. The desk itself is room scenery — the
-/// avatar never includes its own desk, so we don't double-render furniture.
+/// One ghost agent on the canvas. It always renders the chair/table-free
+/// worker sprite; room furniture supplies the chair parking spots separately.
 /// Animation is purely cosmetic; world-position writes happen in
 /// `AgentWorldStore.tick(...)`, never here.
 struct AgentAvatarView: View, Equatable {
@@ -68,13 +66,8 @@ struct AgentAvatarView: View, Equatable {
     }
 
     private var spriteImage: Image {
-        if snapshot.isAtDesk {
-            let assetName = "AgentWorkerSeated\(snapshot.role.assetCoreName)\(snapshot.status.seatedSpriteVariant.rawValue)"
-            return Image(assetName)
-        } else {
-            let assetName = "\(snapshot.role.assetPrefix)\(snapshot.status.spriteVariant.rawValue)"
-            return Image(assetName)
-        }
+        let assetName = "\(snapshot.role.assetPrefix)\(snapshot.status.spriteVariant.rawValue)"
+        return Image(assetName)
     }
 
     private func halo(pulse: Double, frame: CGFloat) -> some View {

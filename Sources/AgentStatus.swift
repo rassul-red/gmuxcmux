@@ -18,19 +18,7 @@ public enum AgentStatus: String, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// Which sprite variant to render when the agent is **at its desk**
-    /// (composed `AgentDesk{Role}{State}` asset). Wandering states never
-    /// trigger this — they always use `spriteVariant` instead.
-    var seatedSpriteVariant: AgentSpriteVariant {
-        switch self {
-        case .running: return .working
-        case .asking: return .attention
-        case .thinking: return .idle
-        case .completed: return .idle
-        }
-    }
-
-    /// Whether this status keeps the agent seated at a desk in the room.
+    /// Whether this status parks the agent at a chair in the room.
     /// Wandering states (`thinking`, `completed`) explicitly are not at-desk.
     var isAtDeskStatus: Bool {
         switch self {
