@@ -36,7 +36,7 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
         controller.add(bridge, name: GhostBridgeMessageName.action)
         controller.add(bridge, name: GhostBridgeMessageName.metrics)
 
-        if let script = Self.loadBridgeUserScript() {
+        for script in Self.loadUserScripts() {
             controller.addUserScript(script)
         }
 
@@ -212,37 +212,70 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private static func loadBridgeUserScript() -> WKUserScript? {
+    /// Loads the dashboard's WKUserScript assets in injection-order:
+    ///
+    ///   1. `bridge.js`               — atDocumentStart, installs
+    ///                                  `window.__ghostBridge` (Task #3).
+    ///   2. `ghost-room-overlay.js`   — atDocumentEnd, renders the room scene
+    ///                                  on top of the bundled dashboard
+    ///                                  (issue #17). Injected after document
+    ///                                  end so `document.body` is available.
+    ///
+    /// A missing optional script does not block the others — the bridge is
+    /// required, but the overlay is presentational and degrades cleanly.
+    private static func loadUserScripts() -> [WKUserScript] {
+        var scripts: [WKUserScript] = []
+        if let bridge = loadBundledScript(
+            name: "bridge",
+            injectionTime: .atDocumentStart
+        ) {
+            scripts.append(bridge)
+        }
+        if let overlay = loadBundledScript(
+            name: "ghost-room-overlay",
+            injectionTime: .atDocumentEnd
+        ) {
+            scripts.append(overlay)
+        }
+        return scripts
+    }
+
+    private static func loadBundledScript(
+        name: String,
+        injectionTime: WKUserScriptInjectionTime
+    ) -> WKUserScript? {
         guard let base = Bundle.main.resourceURL else {
             #if DEBUG
-            dlog("ghost.bridge.js missing: Bundle.main.resourceURL is nil")
+            dlog("ghost.\(name).js missing: Bundle.main.resourceURL is nil")
             #endif
             return nil
         }
-        let candidate = base.appendingPathComponent("GhostDashboard/bridge.js")
+        let candidate = base
+            .appendingPathComponent("GhostDashboard")
+            .appendingPathComponent("\(name).js")
         let url: URL
         if FileManager.default.fileExists(atPath: candidate.path) {
             url = candidate
         } else if let bundled = Bundle.main.url(
-            forResource: "GhostDashboard/bridge",
+            forResource: "GhostDashboard/\(name)",
             withExtension: "js"
         ) {
             url = bundled
         } else {
             #if DEBUG
-            dlog("ghost.bridge.js asset missing at \(candidate.path)")
+            dlog("ghost.\(name).js asset missing at \(candidate.path)")
             #endif
             return nil
         }
         guard let source = try? String(contentsOf: url, encoding: .utf8) else {
             #if DEBUG
-            dlog("ghost.bridge.js read failed at \(url.path)")
+            dlog("ghost.\(name).js read failed at \(url.path)")
             #endif
             return nil
         }
         return WKUserScript(
             source: source,
-            injectionTime: .atDocumentStart,
+            injectionTime: injectionTime,
             forMainFrameOnly: true
         )
     }

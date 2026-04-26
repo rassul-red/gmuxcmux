@@ -59,19 +59,38 @@ public struct GhostEntryState: Codable, Equatable {
     /// Lifecycle phase string — one of `walking|working|idle|warning|despawning`.
     /// Optional for backward compatibility with v1 renderers (Issue #14).
     public let lifecycle: String?
+    /// Issue #17: visible motion phase (`spawning`/`wandering`/`walking`/`settled`).
+    /// Optional so older JS that does not consume motion still decodes
+    /// successfully — and so existing snapshot fixtures remain wire-compatible.
+    public let motion: String?
+    /// Issue #17: assigned seat index in the room (0..<5). Optional for the
+    /// same reason as `motion`. Once a ghost has a `tableID` it walks toward
+    /// that seat after launch and parks there.
+    public let tableID: Int?
+    /// Issue #17: ISO-8601 wall-clock timestamp the current motion phase
+    /// started. The JS overlay uses it to drive the walk animation. Optional
+    /// because pre-#17 ghosts (and tests written before this change) do not
+    /// carry the field.
+    public let motionStartedAt: String?
 
     public init(
         ghostID: String,
         state: String,
         label: String,
         lastActivityAt: Double? = nil,
-        lifecycle: String? = nil
+        lifecycle: String? = nil,
+        motion: String? = nil,
+        tableID: Int? = nil,
+        motionStartedAt: String? = nil
     ) {
         self.ghostID = ghostID
         self.state = state
         self.label = label
         self.lastActivityAt = lastActivityAt
         self.lifecycle = lifecycle
+        self.motion = motion
+        self.tableID = tableID
+        self.motionStartedAt = motionStartedAt
     }
 }
 

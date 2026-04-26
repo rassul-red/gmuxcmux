@@ -252,3 +252,190 @@ final class GhostRosterManagerTests: XCTestCase {
         XCTAssertEqual(manager.roster["p3"]?.ghosts.first?.state, .Idle)
     }
 }
+
+// MARK: - Issue #17: agent-launch detection + table assignment
+
+final class GhostMotionTests: XCTestCase {
+    /// First `tool_use` lifts the session out of the initial Idle state.
+    /// That transition is the "agent launched in this terminal tab" signal.
+    func testApplyReportsLaunchOnFirstActivation() {
+        var sm = GhostStateMachine()
+        let result = sm.apply(toolName: "Edit", at: Date())
+        XCTAssertEqual(result.state, .Coding)
+        XCTAssertTrue(result.didLaunch, "Initial Idle → Coding must report didLaunch")
+    }
+
+    /// Once the agent is active, subsequent tool_use events do NOT re-fire
+    /// the launch signal — otherwise the ghost would re-walk to its desk on
+    /// every keystroke.
+    func testApplyDoesNotReportLaunchWhileAlreadyActive() {
+        var sm = GhostStateMachine()
+        let t0 = Date()
+        _ = sm.apply(toolName: "Edit", at: t0)
+        let result = sm.apply(toolName: "Bash", at: t0.addingTimeInterval(1))
+        XCTAssertEqual(result.state, .Checking)
+        XCTAssertFalse(result.didLaunch, "Active → Active is not a launch")
+    }
+
+    /// After 60 seconds of inactivity the state machine collapses to Idle.
+    /// The next tool_use therefore counts as a fresh launch and the ghost
+    /// walks back to its (sticky) desk.
+    func testApplyReportsLaunchAfterIdleCollapse() {
+        var sm = GhostStateMachine()
+        let t0 = Date()
+        _ = sm.apply(toolName: "Edit", at: t0)
+        // Past the 60s idle threshold.
+        let t1 = t0.addingTimeInterval(120)
+        let result = sm.apply(toolName: "Read", at: t1)
+        XCTAssertTrue(result.didLaunch, "Idle (collapsed) → Reading must re-fire didLaunch")
+    }
+
+    /// Roster manager assigns a deterministic seat (lowest free index) on
+    /// the first tool_use for a session, then renders motion = walking.
+    func testRosterAssignsTableOnFirstToolUse() {
+        let manager = GhostRosterManager()
+        manager.register(projectID: "p-motion", cwd: "/Users/test/no-such-cwd-motion")
+        let registered = expectation(description: "registered")
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { registered.fulfill() }
+        wait(for: [registered], timeout: 1.0)
+
+        let event = TranscriptEvent(
+            type: "assistant",
+            timestamp: ISO8601DateFormatter().string(from: Date()),
+            cwd: "/Users/test/no-such-cwd-motion",
+            sessionId: "session-launch-1",
+            uuid: nil,
+            message: TranscriptEvent.TranscriptMessage(content: [
+                TranscriptEvent.ContentItem(type: "tool_use", name: "Edit"),
+            ])
+        )
+        manager.ingestForTesting(projectID: "p-motion", events: [event])
+
+        let hop = expectation(description: "main hop")
+        DispatchQueue.main.async { hop.fulfill() }
+        wait(for: [hop], timeout: 1.0)
+
+        let ghost = manager.roster["p-motion"]?.ghosts.first
+        XCTAssertNotNil(ghost)
+        XCTAssertEqual(ghost?.tableID, 0, "First launched ghost gets seat #0")
+        XCTAssertEqual(ghost?.motion, .walking, "Just-launched ghost is walking to its desk")
+        XCTAssertNotNil(ghost?.motionStartedAt, "Motion clock must start on launch")
+    }
+
+    /// Two distinct sessions launching in the same project occupy seats
+    /// 0 and 1 — the lowest-free-index policy guarantees no collision.
+    func testRosterAssignsDistinctTablesPerSession() {
+        let manager = GhostRosterManager()
+        manager.register(projectID: "p-motion-2", cwd: "/Users/test/no-such-cwd-motion-2")
+        let registered = expectation(description: "registered")
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { registered.fulfill() }
+        wait(for: [registered], timeout: 1.0)
+
+        let now = ISO8601DateFormatter().string(from: Date())
+        let events: [TranscriptEvent] = ["session-A", "session-B"].map { sid in
+            TranscriptEvent(
+                type: "assistant",
+                timestamp: now,
+                cwd: "/Users/test/no-such-cwd-motion-2",
+                sessionId: sid,
+                uuid: nil,
+                message: TranscriptEvent.TranscriptMessage(content: [
+                    TranscriptEvent.ContentItem(type: "tool_use", name: "Read"),
+                ])
+            )
+        }
+        manager.ingestForTesting(projectID: "p-motion-2", events: events)
+
+        let hop = expectation(description: "main hop")
+        DispatchQueue.main.async { hop.fulfill() }
+        wait(for: [hop], timeout: 1.0)
+
+        let seats = manager.roster["p-motion-2"]?.ghosts.compactMap { $0.tableID } ?? []
+        XCTAssertEqual(Set(seats), Set([0, 1]), "Distinct sessions take distinct seats")
+        XCTAssertEqual(seats.count, 2, "Both ghosts have a seat (no nils)")
+    }
+
+    /// Ghost without a launch-derived seat (initial registration with no
+    /// activity) renders as `spawning`, not `walking`. We don't have a
+    /// pre-launch entry in the public model today, but verify the derivation
+    /// rule by checking the post-collapse pathway: idle → wandering, seat
+    /// stays sticky.
+    func testIdleCollapseFlipsMotionToWanderingButKeepsTable() {
+        let manager = GhostRosterManager()
+        manager.register(projectID: "p-motion-3", cwd: "/Users/test/no-such-cwd-motion-3")
+        let registered = expectation(description: "registered")
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { registered.fulfill() }
+        wait(for: [registered], timeout: 1.0)
+
+        let activeAt = Date()
+        let event = TranscriptEvent(
+            type: "assistant",
+            timestamp: ISO8601DateFormatter().string(from: activeAt),
+            cwd: "/Users/test/no-such-cwd-motion-3",
+            sessionId: "session-collapse",
+            uuid: nil,
+            message: TranscriptEvent.TranscriptMessage(content: [
+                TranscriptEvent.ContentItem(type: "tool_use", name: "Bash"),
+            ])
+        )
+        manager.ingestForTesting(projectID: "p-motion-3", events: [event])
+
+        let firstHop = expectation(description: "first main hop")
+        DispatchQueue.main.async { firstHop.fulfill() }
+        wait(for: [firstHop], timeout: 1.0)
+        XCTAssertEqual(manager.roster["p-motion-3"]?.ghosts.first?.tableID, 0)
+
+        // Sweep idle past the 60s threshold.
+        manager.refreshIdleStatesForTesting(now: activeAt.addingTimeInterval(120))
+        let idleHop = expectation(description: "idle main hop")
+        DispatchQueue.main.async { idleHop.fulfill() }
+        wait(for: [idleHop], timeout: 1.0)
+
+        let collapsed = manager.roster["p-motion-3"]?.ghosts.first
+        XCTAssertEqual(collapsed?.state, .Idle)
+        XCTAssertEqual(collapsed?.motion, .wandering, "Idle ghost wanders again")
+        XCTAssertEqual(collapsed?.tableID, 0, "Seat is sticky across idle collapse")
+    }
+}
+
+// MARK: - Issue #17: bridge protocol round-trip + backward compat
+
+final class GhostMotionBridgeProtocolTests: XCTestCase {
+    func testEntryStateRoundTripsMotionFields() throws {
+        let entry = GhostEntryState(
+            ghostID: "specter-1",
+            state: "Coding",
+            label: "Edit",
+            motion: "walking",
+            tableID: 2,
+            motionStartedAt: "2026-04-26T12:00:00.000Z"
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = try encoder.encode(entry)
+        let decoded = try JSONDecoder().decode(GhostEntryState.self, from: data)
+        XCTAssertEqual(decoded, entry)
+        XCTAssertEqual(decoded.motion, "walking")
+        XCTAssertEqual(decoded.tableID, 2)
+        XCTAssertEqual(decoded.motionStartedAt, "2026-04-26T12:00:00.000Z")
+    }
+
+    /// Backward compat: pre-#17 JSON has no motion/tableID/motionStartedAt
+    /// keys. Decoding must succeed and leave the new fields nil so older
+    /// snapshot fixtures keep working and snapshot consumers that haven't
+    /// been updated still get a complete payload.
+    func testEntryStateDecodesWithoutMotionFields() throws {
+        let json = #"{"ghostID":"g-1","label":"Edit","state":"Coding"}"#
+        let decoded = try JSONDecoder().decode(
+            GhostEntryState.self,
+            from: Data(json.utf8)
+        )
+        XCTAssertEqual(decoded.ghostID, "g-1")
+        XCTAssertEqual(decoded.state, "Coding")
+        XCTAssertEqual(decoded.label, "Edit")
+        XCTAssertNil(decoded.motion)
+        XCTAssertNil(decoded.tableID)
+        XCTAssertNil(decoded.motionStartedAt)
+    }
+}
+
