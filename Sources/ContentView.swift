@@ -4281,16 +4281,24 @@ struct ContentView: View {
                 .padding(.horizontal, 9)
                 .padding(.vertical, 6)
 
-            Button(action: {
-                continueRenameFlow(target: target)
-            }) {
-                EmptyView()
+            Divider()
+
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                Button(String(localized: "common.cancel", defaultValue: "Cancel")) {
+                    dismissCommandPalette()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Button(String(localized: "common.rename", defaultValue: "Rename")) {
+                    continueRenameFlow(target: target)
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.defaultAction)
-            .frame(width: 0, height: 0)
-            .opacity(0)
-            .accessibilityHidden(true)
+            .controlSize(.small)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 7)
         }
         .onAppear {
             resetCommandPaletteRenameFocus()
@@ -4322,16 +4330,24 @@ struct ContentView: View {
                 .padding(.horizontal, 9)
                 .padding(.vertical, 6)
 
-            Button(action: {
-                applyRenameFlow(target: target, proposedName: proposedName)
-            }) {
-                EmptyView()
+            Divider()
+
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                Button(String(localized: "common.cancel", defaultValue: "Cancel")) {
+                    dismissCommandPalette()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Button(String(localized: "common.rename", defaultValue: "Rename")) {
+                    applyRenameFlow(target: target, proposedName: proposedName)
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.defaultAction)
-            .frame(width: 0, height: 0)
-            .opacity(0)
-            .accessibilityHidden(true)
+            .controlSize(.small)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 7)
         }
     }
 
