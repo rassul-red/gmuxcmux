@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// One "room" in the GUI canvas. Renders a fixed-size office scene: tinted
-/// floor + center rug + per-workspace decorative props + ghost agents at
-/// their world-store positions. World ticks happen in `AgentWorldStore`
-/// (not here) — this view only reads value snapshots.
+/// One "room" in the GUI canvas. Renders room-local props and ghost agents
+/// over the shared 2x2 office background. World ticks happen in
+/// `AgentWorldStore` (not here) — this view only reads value snapshots.
 struct AgentsCanvasRoomView: View, Equatable {
     let snapshot: AgentsCanvasRoomSnapshot
     let now: Date
@@ -19,11 +18,12 @@ struct AgentsCanvasRoomView: View, Equatable {
 
     var body: some View {
         let size = snapshot.roomSize
-        VStack(alignment: .leading, spacing: 6) {
-            header
+        ZStack(alignment: .topLeading) {
             content
                 .frame(width: size.width, height: size.height)
+            header
         }
+        .frame(width: size.width, height: size.height)
     }
 
     private var header: some View {
@@ -45,14 +45,14 @@ struct AgentsCanvasRoomView: View, Equatable {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: snapshot.roomSize.width, alignment: .leading)
+        .offset(x: 8, y: -24)
+        .zIndex(1)
     }
 
     @ViewBuilder
     private var content: some View {
         let size = snapshot.roomSize
         ZStack {
-            officeFloor
-
             Image("OfficePropFloorRug")
                 .resizable()
                 .interpolation(.none)
@@ -88,51 +88,5 @@ struct AgentsCanvasRoomView: View, Equatable {
             }
         }
         .frame(width: size.width, height: size.height)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(snapshot.accentColor.opacity(0.30), lineWidth: 1.2)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    /// Tinted office floor — solid dark base + a subtle diagonal grid.
-    private var officeFloor: some View {
-        let accent = snapshot.accentColor
-        return Canvas { context, size in
-            let baseColor = Color(red: 0.08, green: 0.07, blue: 0.11)
-            context.fill(
-                Path(CGRect(origin: .zero, size: size)),
-                with: .color(baseColor)
-            )
-            // Soft accent wash from the back wall (top) downward.
-            context.fill(
-                Path(CGRect(origin: .zero, size: CGSize(width: size.width, height: size.height * 0.45))),
-                with: .linearGradient(
-                    Gradient(colors: [accent.opacity(0.16), accent.opacity(0)]),
-                    startPoint: CGPoint(x: 0, y: 0),
-                    endPoint: CGPoint(x: 0, y: size.height * 0.45)
-                )
-            )
-            // Floor tile grid for some texture.
-            let tile: CGFloat = 48
-            var x: CGFloat = 0
-            while x < size.width {
-                let line = Path { p in
-                    p.move(to: CGPoint(x: x, y: 0))
-                    p.addLine(to: CGPoint(x: x, y: size.height))
-                }
-                context.stroke(line, with: .color(Color.white.opacity(0.025)), lineWidth: 1)
-                x += tile
-            }
-            var y: CGFloat = 0
-            while y < size.height {
-                let line = Path { p in
-                    p.move(to: CGPoint(x: 0, y: y))
-                    p.addLine(to: CGPoint(x: size.width, y: y))
-                }
-                context.stroke(line, with: .color(Color.white.opacity(0.022)), lineWidth: 1)
-                y += tile
-            }
-        }
     }
 }

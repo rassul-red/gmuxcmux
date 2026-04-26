@@ -3,9 +3,9 @@ import AppKit
 import Combine
 
 /// Top-level "game" canvas shown in the center of the window when GUI mode is
-/// active. Renders one room per workspace as a horizontal row inside a
-/// scrollable, pinch-zoomable world. Agents walk around their rooms when not
-/// busy and park at chairs when running/asking.
+/// active. Renders up to four workspaces as rooms in a fixed 2x2 office map
+/// inside a scrollable, pinch-zoomable world. Agents walk around their rooms
+/// when not busy and park at chairs when running/asking.
 ///
 /// Snapshot-boundary rule (`CLAUDE.md`): row subviews see only immutable value
 /// snapshots + closures. World position writes happen exclusively in
@@ -25,8 +25,16 @@ struct AgentsCanvasView: View {
     @AppStorage("agentsCanvas.chimeEnabled") private var chimeEnabled: Bool = true
 
     private let roomSize = CGSize(width: 720, height: 480)
-    private let roomGap: CGFloat = 120
+    private let maxVisibleRooms = 4
+    private let worldSize = CGSize(width: 1536, height: 1024)
+    private let roomOrigins: [CGPoint] = [
+        CGPoint(x: 32, y: 32),
+        CGPoint(x: 796, y: 32),
+        CGPoint(x: 32, y: 548),
+        CGPoint(x: 796, y: 548),
+    ]
     private let outerPadding: CGFloat = 60
+    private let viewportPadding: CGFloat = 24
     private let minZoom: CGFloat = 0.5
     private let maxZoom: CGFloat = 2.5
 
@@ -36,16 +44,19 @@ struct AgentsCanvasView: View {
         let workspaces = workspaceTabs()
         let rooms = makeRoomSnapshots(for: workspaces)
 
-        ZStack {
-            Color(red: 0.04, green: 0.03, blue: 0.06).ignoresSafeArea()
+        GeometryReader { proxy in
+            let displayZoom = zoom * fitScale(for: proxy.size)
 
-            if rooms.isEmpty {
-                emptyState
-            } else {
-                worldScrollView(rooms: rooms)
+            ZStack {
+                Color(red: 0.04, green: 0.03, blue: 0.06).ignoresSafeArea()
+
+                if rooms.isEmpty {
+                    emptyState
+                } else {
+                    worldScrollView(rooms: rooms, displayZoom: displayZoom)
+                    zoomHUD(displayZoom: displayZoom)
+                }
             }
-
-            zoomHUD
         }
         .onReceive(tickPublisher) { now in
             advanceWorld(workspaces: workspaces, at: now)
@@ -61,9 +72,14 @@ struct AgentsCanvasView: View {
 
     // MARK: - Subviews
 
-    private func worldScrollView(rooms: [AgentsCanvasRoomSnapshot]) -> some View {
+    private func worldScrollView(rooms: [AgentsCanvasRoomSnapshot], displayZoom: CGFloat) -> some View {
         ScrollView([.horizontal, .vertical], showsIndicators: false) {
-            HStack(alignment: .top, spacing: roomGap) {
+            ZStack(alignment: .topLeading) {
+                Image("AgentOfficeQuadBackground")
+                    .resizable()
+                    .interpolation(.none)
+                    .frame(width: worldSize.width, height: worldSize.height)
+
                 ForEach(rooms) { room in
                     AgentsCanvasRoomView(
                         snapshot: room,
@@ -75,13 +91,14 @@ struct AgentsCanvasView: View {
                         }
                     )
                     .equatable()
+                    .position(roomCenter(for: room.slotIndex))
                 }
             }
             .padding(outerPadding)
-            .scaleEffect(zoom, anchor: .topLeading)
+            .scaleEffect(displayZoom, anchor: .topLeading)
             .frame(
-                width: worldContentWidth(roomCount: rooms.count) * zoom,
-                height: worldContentHeight() * zoom,
+                width: worldContentWidth() * displayZoom,
+                height: worldContentHeight() * displayZoom,
                 alignment: .topLeading
             )
         }
@@ -108,7 +125,7 @@ struct AgentsCanvasView: View {
         }
     }
 
-    private var zoomHUD: some View {
+    private func zoomHUD(displayZoom: CGFloat) -> some View {
         VStack {
             Spacer()
             HStack {
@@ -119,7 +136,7 @@ struct AgentsCanvasView: View {
                         accessibility: String(localized: "agentsCanvas.zoom.out", defaultValue: "Zoom out"),
                         action: { zoom = clampZoom(zoom - 0.1); baseZoom = zoom }
                     )
-                    Text(zoomLabel)
+                    Text(zoomLabel(displayZoom: displayZoom))
                         .font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundColor(.white.opacity(0.75))
                         .frame(minWidth: 36)
@@ -171,22 +188,34 @@ struct AgentsCanvasView: View {
         .accessibilityLabel(accessibility)
     }
 
-    private var zoomLabel: String {
-        "\(Int(zoom * 100))%"
+    private func zoomLabel(displayZoom: CGFloat) -> String {
+        "\(Int(displayZoom * 100))%"
     }
 
     private func clampZoom(_ value: CGFloat) -> CGFloat {
         return min(max(value, minZoom), maxZoom)
     }
 
-    private func worldContentWidth(roomCount: Int) -> CGFloat {
-        guard roomCount > 0 else { return roomSize.width + outerPadding * 2 }
-        let rooms = CGFloat(roomCount)
-        return rooms * roomSize.width + (rooms - 1) * roomGap + outerPadding * 2
+    private func fitScale(for viewportSize: CGSize) -> CGFloat {
+        let widthScale = max((viewportSize.width - viewportPadding * 2) / worldContentWidth(), 0.1)
+        let heightScale = max((viewportSize.height - viewportPadding * 2) / worldContentHeight(), 0.1)
+        return min(widthScale, heightScale, 1.0)
+    }
+
+    private func roomCenter(for slotIndex: Int) -> CGPoint {
+        let origin = roomOrigins[min(slotIndex, roomOrigins.count - 1)]
+        return CGPoint(
+            x: origin.x + roomSize.width / 2,
+            y: origin.y + roomSize.height / 2
+        )
+    }
+
+    private func worldContentWidth() -> CGFloat {
+        worldSize.width + outerPadding * 2
     }
 
     private func worldContentHeight() -> CGFloat {
-        roomSize.height + 32 + outerPadding * 2
+        worldSize.height + outerPadding * 2
     }
 
     // MARK: - World tick
@@ -196,7 +225,7 @@ struct AgentsCanvasView: View {
     /// reads from `worldStore.statesByPanelId`.
     private func advanceWorld(workspaces: [Workspace], at now: Date) {
         var drivers: [AgentWorldDriver] = []
-        for (workspaceIndex, workspace) in workspaces.enumerated() {
+        for (workspaceIndex, workspace) in workspaces.prefix(maxVisibleRooms).enumerated() {
             let panels = workspace.panels.values.compactMap { $0 as? TerminalPanel }
             let sortedPanels = panels.sorted { lhs, rhs in
                 lhs.displayTitle.localizedCaseInsensitiveCompare(rhs.displayTitle) == .orderedAscending
@@ -268,7 +297,7 @@ struct AgentsCanvasView: View {
     // MARK: - Snapshot building
 
     private func workspaceTabs() -> [Workspace] {
-        Array(tabManager.tabs)
+        Array(tabManager.tabs.prefix(maxVisibleRooms))
     }
 
     private func makeRoomSnapshots(for workspaces: [Workspace]) -> [AgentsCanvasRoomSnapshot] {
@@ -282,7 +311,7 @@ struct AgentsCanvasView: View {
         ]
         let states = worldStore.statesByPanelId
 
-        return workspaces.enumerated().map { index, workspace in
+        return workspaces.prefix(maxVisibleRooms).enumerated().map { index, workspace in
             let panels = workspace.panels.values.compactMap { $0 as? TerminalPanel }
             let sorted = panels.sorted {
                 $0.displayTitle.localizedCaseInsensitiveCompare($1.displayTitle) == .orderedAscending
@@ -316,6 +345,7 @@ struct AgentsCanvasView: View {
                 id: workspace.id,
                 title: workspace.title,
                 accentColor: palette[index % palette.count],
+                slotIndex: index,
                 roomSize: roomSize,
                 decorations: Self.roomFurniture,
                 agents: agents
@@ -425,6 +455,7 @@ struct AgentsCanvasRoomSnapshot: Identifiable, Equatable {
     let id: UUID
     let title: String
     let accentColor: Color
+    let slotIndex: Int
     let roomSize: CGSize
     let decorations: [AgentRoomDecoration]
     let agents: [AgentsCanvasAgentSnapshot]
