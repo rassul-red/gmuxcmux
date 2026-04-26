@@ -2386,6 +2386,14 @@ struct ContentView: View {
         WorkspacePresentationModeSettings.mode(for: workspacePresentationMode) == .minimal
     }
 
+    private var isGuiMode: Bool {
+        WorkspacePresentationModeSettings.mode(for: workspacePresentationMode) == .gui
+    }
+
+    @StateObject private var agentRoleStore = AgentRoleStore.shared
+
+    @AppStorage("agentsCanvas.railWidth") private var agentsCanvasRailWidth: Double = 480
+
     private var effectiveTitlebarPadding: CGFloat {
         Self.effectiveTitlebarPadding(
             isMinimalMode: isMinimalMode,
@@ -2485,12 +2493,41 @@ struct ContentView: View {
         // File explorer is always in the view tree. Visibility is controlled by
         // frame width (0 when hidden), avoiding SwiftUI view insertion/removal
         // and all associated transition animations.
-        return HStack(spacing: 0) {
-            terminalContentWithSidebarDropOverlay
-            if rightSidebarVisible {
-                Divider()
+        Group {
+            if isGuiMode {
+                guiModeContent
+            } else {
+                HStack(spacing: 0) {
+                    terminalContentWithSidebarDropOverlay
+                    if rightSidebarVisible {
+                        Divider()
+                    }
+                    rightSidebarPanelWithBackdrop
+                }
             }
-            rightSidebarPanelWithBackdrop
+        }
+    }
+
+    /// Layout used when GUI presentation mode is active: the agents canvas
+    /// takes the center, the existing terminal/workspace content shifts to a
+    /// fixed-width rail on the right.
+    private var guiModeContent: some View {
+        HStack(spacing: 0) {
+            AgentsCanvasView(
+                tabManager: tabManager,
+                notificationStore: notificationStore,
+                roleStore: agentRoleStore,
+                onFocusTerminal: { [tabManager] workspaceId, terminalId in
+                    guard let workspace = tabManager.tabs.first(where: { $0.id == workspaceId }) else { return }
+                    tabManager.selectWorkspace(workspace)
+                    workspace.focusPanel(terminalId)
+                }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .layoutPriority(1)
+            Divider()
+            terminalContentWithSidebarDropOverlay
+                .frame(width: CGFloat(agentsCanvasRailWidth))
         }
     }
 
@@ -2873,6 +2910,25 @@ struct ContentView: View {
 
     private var contentAndSidebarLayout: AnyView {
         let layout: AnyView
+        if isGuiMode {
+            layout = AnyView(
+                HStack(spacing: 0) {
+                    if sidebarState.isVisible {
+                        sidebarPanelWithBackdrop
+                    }
+                    guiModeContent
+                }
+            )
+            return AnyView(
+                layout
+                    .overlay(alignment: .leading) {
+                        if sidebarState.isVisible {
+                            sidebarResizerOverlay
+                                .zIndex(1000)
+                        }
+                    }
+            )
+        }
         // When matching terminal background, use HStack so both sidebar and terminal
         // sit directly on the window background with no intermediate layers.
         let useWithinWindow = sidebarBlendMode == SidebarBlendModeOption.withinWindow.rawValue
@@ -12516,6 +12572,9 @@ private struct TabItemView: View, Equatable {
             selectedTabIds: $selectedTabIds,
             lastSidebarSelectionIndex: $lastSidebarSelectionIndex
         ))
+        .onTapGesture(count: 2) {
+            promptRename()
+        }
         .onTapGesture {
             updateSelection()
         }

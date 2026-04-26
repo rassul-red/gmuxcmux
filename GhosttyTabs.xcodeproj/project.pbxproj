@@ -168,6 +168,13 @@
 		FE003102 /* SessionIndexView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003002 /* SessionIndexView.swift */; };
 		FE003103 /* RightSidebarPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003003 /* RightSidebarPanelView.swift */; };
 		FE003104 /* AgentsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003004 /* AgentsPanelView.swift */; };
+		FE003110 /* AgentRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003010 /* AgentRole.swift */; };
+		FE003111 /* AgentStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003011 /* AgentStatus.swift */; };
+		FE003112 /* AgentRoleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003012 /* AgentRoleStore.swift */; };
+		FE003113 /* AgentsCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003013 /* AgentsCanvasView.swift */; };
+		FE003114 /* AgentAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003014 /* AgentAvatarView.swift */; };
+		FE003115 /* AgentsCanvasRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003015 /* AgentsCanvasRoomView.swift */; };
+		FE003116 /* AgentWorldStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE003016 /* AgentWorldStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -397,6 +404,13 @@
 		FE003002 /* SessionIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionIndexView.swift; sourceTree = "<group>"; };
 		FE003003 /* RightSidebarPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightSidebarPanelView.swift; sourceTree = "<group>"; };
 		FE003004 /* AgentsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsPanelView.swift; sourceTree = "<group>"; };
+		FE003010 /* AgentRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentRole.swift; sourceTree = "<group>"; };
+		FE003011 /* AgentStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatus.swift; sourceTree = "<group>"; };
+		FE003012 /* AgentRoleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentRoleStore.swift; sourceTree = "<group>"; };
+		FE003013 /* AgentsCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsCanvasView.swift; sourceTree = "<group>"; };
+		FE003014 /* AgentAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentAvatarView.swift; sourceTree = "<group>"; };
+		FE003015 /* AgentsCanvasRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsCanvasRoomView.swift; sourceTree = "<group>"; };
+		FE003016 /* AgentWorldStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentWorldStore.swift; sourceTree = "<group>"; };
 		IC000002 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -603,6 +617,13 @@
 				FE003002 /* SessionIndexView.swift */,
 				FE003003 /* RightSidebarPanelView.swift */,
 				FE003004 /* AgentsPanelView.swift */,
+				FE003010 /* AgentRole.swift */,
+				FE003011 /* AgentStatus.swift */,
+				FE003012 /* AgentRoleStore.swift */,
+				FE003013 /* AgentsCanvasView.swift */,
+				FE003014 /* AgentAvatarView.swift */,
+				FE003015 /* AgentsCanvasRoomView.swift */,
+				FE003016 /* AgentWorldStore.swift */,
 				105D8421DF4E2E09D255D785 /* Auth */,
 			);
 			path = Sources;
@@ -981,6 +1002,13 @@
 				FE003102 /* SessionIndexView.swift in Sources */,
 				FE003103 /* RightSidebarPanelView.swift in Sources */,
 				FE003104 /* AgentsPanelView.swift in Sources */,
+				FE003110 /* AgentRole.swift in Sources */,
+				FE003111 /* AgentStatus.swift in Sources */,
+				FE003112 /* AgentRoleStore.swift in Sources */,
+				FE003113 /* AgentsCanvasView.swift in Sources */,
+				FE003114 /* AgentAvatarView.swift in Sources */,
+				FE003115 /* AgentsCanvasRoomView.swift in Sources */,
+				FE003116 /* AgentWorldStore.swift in Sources */,
 				36CE99ED050785B5E96B72BB /* AuthCallbackRouter.swift in Sources */,
 				D9FEC58D5BACCF76459F1BBE /* AuthEnvironment.swift in Sources */,
 				350DAC5EBD38642A3E81471A /* AuthManager.swift in Sources */,

@@ -18,6 +18,7 @@ enum WorkspacePresentationModeSettings {
     enum Mode: String {
         case standard
         case minimal
+        case gui
     }
 
     static let defaultMode: Mode = .standard
@@ -32,6 +33,10 @@ enum WorkspacePresentationModeSettings {
 
     static func isMinimal(defaults: UserDefaults = .standard) -> Bool {
         mode(defaults: defaults) == .minimal
+    }
+
+    static func isGui(defaults: UserDefaults = .standard) -> Bool {
+        mode(defaults: defaults) == .gui
     }
 }
 

@@ -21,6 +21,8 @@ struct cmuxApp: App {
     private var showSidebarDevBuildBanner = DevBuildBannerDebugSettings.defaultShowSidebarBanner
     @AppStorage(SocketControlSettings.appStorageKey) private var socketControlMode = SocketControlSettings.defaultMode.rawValue
     @AppStorage(BrowserToolbarAccessorySpacingDebugSettings.key) private var browserToolbarAccessorySpacingRaw = BrowserToolbarAccessorySpacingDebugSettings.defaultSpacing
+    @AppStorage(WorkspacePresentationModeSettings.modeKey)
+    private var appWorkspacePresentationMode = WorkspacePresentationModeSettings.defaultMode.rawValue
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     private var browserToolbarAccessorySpacing: Int {
@@ -412,6 +414,17 @@ struct cmuxApp: App {
                     String(localized: "debug.devBuildBanner.show", defaultValue: "Show Dev Build Banner"),
                     isOn: $showSidebarDevBuildBanner
                 )
+
+                Button(
+                    WorkspacePresentationModeSettings.mode(for: appWorkspacePresentationMode) == .gui
+                        ? String(localized: "debug.menu.guiMode.disable", defaultValue: "Disable Agents Canvas (GUI Mode)")
+                        : String(localized: "debug.menu.guiMode.enable", defaultValue: "Enable Agents Canvas (GUI Mode)")
+                ) {
+                    let current = WorkspacePresentationModeSettings.mode(for: appWorkspacePresentationMode)
+                    appWorkspacePresentationMode = (current == .gui)
+                        ? WorkspacePresentationModeSettings.Mode.standard.rawValue
+                        : WorkspacePresentationModeSettings.Mode.gui.rawValue
+                }
 
                 Divider()
 

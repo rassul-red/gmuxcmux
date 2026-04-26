@@ -91771,6 +91771,167 @@
           }
         }
       }
+    },
+    "agentsCanvas.empty.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No workspaces yet" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ワークスペースがありません" } }
+      }
+    },
+    "agentsCanvas.zoom.in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Zoom in" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "拡大" } }
+      }
+    },
+    "agentsCanvas.zoom.out": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Zoom out" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "縮小" } }
+      }
+    },
+    "agentsCanvas.zoom.reset": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Reset zoom" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ズームをリセット" } }
+      }
+    },
+    "agentsCanvas.empty.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open a workspace to see its agents." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ワークスペースを開くとエージェントが表示されます。" } }
+      }
+    },
+    "agentsCanvas.slot.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "empty room" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "空き部屋" } }
+      }
+    },
+    "agentsCanvas.room.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "no agents in this room" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "この部屋にエージェントはいません" } }
+      }
+    },
+    "agentsCanvas.bubble.done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "DONE" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "完了" } }
+      }
+    },
+    "agentsCanvas.role.section": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Role" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ロール" } }
+      }
+    },
+    "agentsCanvas.role.builder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Builder" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ビルダー" } }
+      }
+    },
+    "agentsCanvas.role.builder.desc": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Implements features and writes code." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "機能を実装し、コードを書きます。" } }
+      }
+    },
+    "agentsCanvas.role.debugger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Debugger" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "デバッガー" } }
+      }
+    },
+    "agentsCanvas.role.debugger.desc": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Hunts down bugs and traces failures." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "バグを追跡し、失敗の原因を調査します。" } }
+      }
+    },
+    "agentsCanvas.role.orchestrator": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Orchestrator" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "オーケストレーター" } }
+      }
+    },
+    "agentsCanvas.role.orchestrator.desc": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Coordinates other agents and plans work." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "他のエージェントを調整し、作業を計画します。" } }
+      }
+    },
+    "agentsCanvas.role.reviewer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Reviewer" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "レビュアー" } }
+      }
+    },
+    "agentsCanvas.role.reviewer.desc": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Reviews changes and proposes improvements." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "変更をレビューし、改善を提案します。" } }
+      }
+    },
+    "agentsCanvas.status.running": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Running" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "実行中" } }
+      }
+    },
+    "agentsCanvas.status.thinking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Thinking" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "考え中" } }
+      }
+    },
+    "agentsCanvas.status.asking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Needs input" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "入力待ち" } }
+      }
+    },
+    "agentsCanvas.status.completed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Done" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "完了" } }
+      }
+    },
+    "debug.menu.guiMode.enable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Enable Agents Canvas (GUI Mode)" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "エージェントキャンバスを有効化 (GUIモード)" } }
+      }
+    },
+    "debug.menu.guiMode.disable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Disable Agents Canvas (GUI Mode)" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "エージェントキャンバスを無効化 (GUIモード)" } }
+      }
     }
   }
 }

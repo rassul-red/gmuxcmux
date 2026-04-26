@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -l /Users/rassulw/Documents/cmuxnewtin/Assets.xcassets/AgentWorkers/Archive.zip)",
+      "Bash(grep -oE '\"name\"[[:space:]]*:[[:space:]]*\"[^\"]{1,80}\"' \"/Users/rassulw/Downloads/Ghost Assets _standalone_ \\(1\\).html\")",
+      "Bash(python3 *)",
+      "Bash(./scripts/reload.sh --tag cmux-gui)"
+    ]
+  }
+}
