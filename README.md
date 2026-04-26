@@ -1,302 +1,104 @@
-<h1 align="center">cmux</h1>
-<p align="center">A Ghostty-based macOS terminal with vertical tabs and notifications for AI coding agents</p>
+<h1 align="center">gmuxcmux</h1>
+<p align="center"><b>A GUI-first fork of <a href="https://github.com/manaflow-ai/cmux">cmux</a> — workspaces are rooms, terminal panels are wandering ghosts.</b></p>
 
 <p align="center">
-  <a href="https://github.com/manaflow-ai/cmux/releases/latest/download/cmux-macos.dmg">
-    <img src="./docs/assets/macos-badge.png" alt="Download cmux for macOS" width="180" />
-  </a>
+  English | <a href="README.ko.md">한국어</a>
 </p>
 
 <p align="center">
-  English | <a href="README.ja.md">日本語</a> | <a href="README.vi.md">Tiếng Việt</a> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.zh-TW.md">繁體中文</a> | <a href="README.ko.md">한국어</a> | <a href="README.de.md">Deutsch</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.it.md">Italiano</a> | <a href="README.da.md">Dansk</a> | <a href="README.pl.md">Polski</a> | <a href="README.ru.md">Русский</a> | <a href="README.bs.md">Bosanski</a> | <a href="README.ar.md">العربية</a> | <a href="README.no.md">Norsk</a> | <a href="README.pt-BR.md">Português (Brasil)</a> | <a href="README.th.md">ไทย</a> | <a href="README.tr.md">Türkçe</a> | <a href="README.km.md">ភាសាខ្មែរ</a> | <a href="README.uk.md">Українська</a>
+  <a href="https://github.com/manaflow-ai/cmux"><img src="https://img.shields.io/badge/upstream-manaflow--ai%2Fcmux-555?logo=github" alt="Upstream cmux" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License" /></a>
 </p>
 
-<p align="center">
-  <a href="https://x.com/manaflowai"><img src="https://img.shields.io/badge/@manaflow-555?logo=x" alt="X / Twitter" /></a>
-  <a href="https://discord.gg/xsgFEVrWCZ"><img src="https://img.shields.io/badge/Discord-555?logo=discord" alt="Discord" /></a>
-  <a href="https://github.com/manaflow-ai/cmux"><img src="https://img.shields.io/github/stars/manaflow-ai/cmux?style=flat&logo=github&label=stars&color=4c71f2" alt="GitHub stars" /></a>
-</p>
+---
 
-<p align="center">
-  <img src="./docs/assets/main-first-image.png" alt="cmux screenshot" width="900" />
-</p>
+## Why GUI-first?
 
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=i-WxO5YUTOs">▶ Demo video</a> · <a href="https://cmux.com/blog/zen-of-cmux">The Zen of cmux</a>
-</p>
+cmux is already a beautiful terminal — vertical tabs, notifications, splits, an in-app browser, GPU-accelerated rendering through libghostty. But the moment you run *many* agents in parallel, the answer to "what is happening right now?" is still **a wall of text inside a wall of tabs**. You read tab titles to figure out who needs you.
 
-## Features
+gmuxcmux flips that. The terminal grid stops being the only first-class surface. The new primary surface is a **living world** where every workspace is a room and every terminal panel is a pixel-art ghost. You glance, you don't read. At one look you can see who is busy at a desk, who is wandering the floor, and who just finished — across every workspace at once.
 
-<table>
-<tr>
-<td width="40%" valign="middle">
-<h3>Notification rings</h3>
-Panes get a blue ring and tabs light up when coding agents need your attention
-</td>
-<td width="60%">
-<img src="./docs/assets/notification-rings.png" alt="Notification rings" width="100%" />
-</td>
-</tr>
-<tr>
-<td width="40%" valign="middle">
-<h3>Notification panel</h3>
-See all pending notifications in one place, jump to the most recent unread
-</td>
-<td width="60%">
-<img src="./docs/assets/sidebar-notification-badge.png" alt="Sidebar notification badge" width="100%" />
-</td>
-</tr>
-<tr>
-<td width="40%" valign="middle">
-<h3>In-app browser</h3>
-Split a browser alongside your terminal with a scriptable API ported from <a href="https://github.com/vercel-labs/agent-browser">agent-browser</a>
-</td>
-<td width="60%">
-<img src="./docs/assets/built-in-browser.png" alt="Built-in browser" width="100%" />
-</td>
-</tr>
-<tr>
-<td width="40%" valign="middle">
-<h3>Vertical + horizontal tabs</h3>
-Sidebar shows git branch, linked PR status/number, working directory, listening ports, and latest notification text. Split horizontally and vertically.
-</td>
-<td width="60%">
-<img src="./docs/assets/vertical-horizontal-tabs-and-splits.png" alt="Vertical tabs and split panes" width="100%" />
-</td>
-</tr>
-<tr>
-<td width="40%" valign="middle">
-<h3>SSH</h3>
-<code>cmux ssh user@remote</code> creates a workspace for a remote machine. Browser panes route through the remote network so localhost just works. Drag an image into a remote session to upload via scp.
-</td>
-<td width="60%">
-<img src="./docs/assets/ssh.png" alt="cmux SSH" width="100%" />
-</td>
-</tr>
-<tr>
-<td width="40%" valign="middle">
-<h3>Claude Code Teams</h3>
-<code>cmux claude-teams</code> runs Claude Code's teammate mode with one command. Teammates spawn as native splits with sidebar metadata and notifications. No tmux required.
-</td>
-<td width="60%">
-<img src="./docs/assets/claude-code-teams.png" alt="Claude Code Teams" width="100%" />
-</td>
-</tr>
-</table>
+> **Terminal-first asks:** _What is on this pane?_
+>
+> **GUI-first asks:** _What is happening across all of my work?_
 
-- **Browser import** — Import cookies, history, and sessions from Chrome, Firefox, Arc, and 20+ browsers so browser panes start authenticated
-- **Custom commands** — Define project-specific actions in [`cmux.json`](https://cmux.com/docs/custom-commands) that launch from the command palette
-- **Scriptable** — CLI and socket API to create workspaces, split panes, send keystrokes, and automate the browser
-- **Native macOS app** — Built with Swift and AppKit, not Electron. Fast startup, low memory.
-- **Ghostty compatible** — Reads your existing `~/.config/ghostty/config` for themes, fonts, and colors
-- **GPU-accelerated** — Powered by libghostty for smooth rendering
+Both questions still matter. cmux answers the first one beautifully. gmuxcmux adds a calm, ambient surface that answers the second one — without taking the terminal away.
 
-## Install
+---
 
-### DMG (recommended)
+## The mental model
 
-<a href="https://github.com/manaflow-ai/cmux/releases/latest/download/cmux-macos.dmg">
-  <img src="./docs/assets/macos-badge.png" alt="Download cmux for macOS" width="180" />
-</a>
+| cmux concept              | gmuxcmux representation                                       |
+|---|---|
+| Workspace                 | A **room** (720×480 pt office scenery)                        |
+| Terminal panel            | A **ghost agent** standing inside that room                   |
+| Panel role (user-set)     | Sprite variant: Builder · Debugger · Orchestrator · Reviewer  |
+| Shell is running a command| Ghost **walks to a desk and sits down**                       |
+| Shell is idle at a prompt | Ghost **wanders the floor**                                   |
+| Notification fires        | Green **halo + DONE bubble + chime**                          |
 
-Open the `.dmg` and drag cmux to your Applications folder. cmux auto-updates via Sparkle, so you only need to download once.
+Every state is derived from cmux's existing prompt-idle / command-running detector and OSC 9/99/777 notifications. There is **no new shell instrumentation, no agent-side configuration**. If your shell already shows up correctly in cmux, it shows up correctly here.
 
-### Homebrew
+---
+
+## Two GUI surfaces, one source of truth
+
+gmuxcmux does not replace the terminal. It adds two GUI surfaces alongside it:
+
+1. **Agents Panel** — a compact map in the right sidebar, always available. Each workspace is a labeled room, each panel is a clickable agent box. Tap to focus that terminal. Safe in Release builds.
+2. **Agents Canvas** — the full game-like world. Pinch to zoom (0.5×–2.5×), two-finger to pan, ghosts walk to chairs and back, halos pulse, the Glass chime plays when an agent finishes. DEBUG-only, toggled in **Debug → Enable Agents Canvas**.
+
+Both surfaces read from the same status feed as the terminal grid. There is no separate "agent state" anywhere — the GUI is just a different rendering of the same truth that drives the terminal.
+
+---
+
+## Architecture, in one breath
+
+- **`AgentWorldStore`** is a `@MainActor` singleton that owns every ghost's `(position, target, facingLeft, arrived)` in room-local coordinates. Its only mutation entry point is `tick(now:drivers:)`.
+- A **30 fps `Timer.publish`** drives `tick`. Position interpolates at 30 pt/s, snaps on arrival, and picks a new wander target every 4–8 s when idle.
+- **Snapshot boundary**: `AgentsCanvasRoomView` and `AgentAvatarView` are `Equatable` value-snapshot views. They never hold an `ObservableObject`. This is the same rule that protects cmux's Sessions panel and workspace sidebar from `LazyLayoutViewCache` thrashing — see upstream issue [manaflow-ai/cmux#2586](https://github.com/manaflow-ai/cmux/issues/2586).
+- **Animation layering** is strict. World position is driven by `tick`. "Looks alive" (idle bob, walk jiggle, DONE bubble timing) lives in `TimelineView(.animation)`. State writes never happen inside view bodies.
+
+Full design notes — sprite system, room layout, walk cycle, world canvas, manual test plan — live in [`cmux-gui.md`](./cmux-gui.md).
+
+---
+
+## Build and run
 
 ```bash
-brew tap manaflow-ai/cmux
-brew install --cask cmux
+./scripts/setup.sh                                  # init submodules + GhosttyKit
+./scripts/reload.sh --tag cmux-gui --launch         # build the DEBUG app and open it
 ```
 
-To update later:
+Then in the running app: **Debug → Enable Agents Canvas**.
 
-```bash
-brew upgrade --cask cmux
-```
+> Always pass `--tag`. Untagged `xcodebuild` or `open cmux DEV.app` will collide with any other tagged debug instance over the shared socket and bundle ID.
 
-On first launch, macOS may ask you to confirm opening an app from an identified developer. Click **Open** to proceed.
+---
 
-## Why cmux?
+## Status
 
-I run a lot of Claude Code and Codex sessions in parallel. I was using Ghostty with a bunch of split panes, and relying on native macOS notifications to know when an agent needed me. But Claude Code's notification body is always just "Claude is waiting for your input" with no context, and with enough tabs open I couldn't even read the titles anymore.
+This is a personal fork. There is **no signed DMG, no Homebrew tap, no auto-update**. Build from source. The Agents Canvas is DEBUG-only by design; the Agents Panel is safe in Release.
 
-I tried a few coding orchestrators but most of them were Electron/Tauri apps and the performance bugged me. I also just prefer the terminal since GUI orchestrators lock you into their workflow. So I built cmux as a native macOS app in Swift/AppKit. It uses libghostty for terminal rendering and reads your existing Ghostty config for themes, fonts, and colors.
+Known limitations of the canvas:
 
-The main additions are the sidebar and notification system. The sidebar has vertical tabs that show git branch, linked PR status/number, working directory, listening ports, and the latest notification text for each workspace. The notification system picks up terminal sequences (OSC 9/99/777) and has a CLI (`cmux notify`) you can wire into agent hooks for Claude Code, OpenCode, etc. When an agent is waiting, its pane gets a blue ring and the tab lights up in the sidebar, so I can tell which one needs me across splits and tabs. Cmd+Shift+U jumps to the most recent unread.
+- No real pathfinding — a ghost walking from a chair to the floor passes straight through other desks.
+- No multi-frame walk animation — walking is faked with horizontal mirroring + a 4 Hz vertical jiggle.
+- Furniture layout and the wander zone are hard-coded constants.
+- Role assignment is per-panel manual via right-click on the agent.
+- Per-panel shell activity comes from cmux's existing detector. If that detector misfires for a particular shell or prompt, the agent will wander when it should sit.
 
-The in-app browser has a scriptable API ported from [agent-browser](https://github.com/vercel-labs/agent-browser). Agents can snapshot the accessibility tree, get element refs, click, fill forms, and evaluate JS. You can split a browser pane next to your terminal and have Claude Code interact with your dev server directly.
+Everything in upstream cmux still works. Vertical tabs, splits, notifications, in-app browser, SSH, Claude Code Teams — all unchanged. For upstream features and full keyboard shortcuts, see the [upstream cmux README](https://github.com/manaflow-ai/cmux#readme).
 
-Everything is scriptable through the CLI and socket API — create workspaces/tabs, split panes, send keystrokes, open URLs in the browser.
+---
 
-## The Zen of cmux
+## Credits
 
-cmux is not prescriptive about how developers hold their tools. It's a terminal and browser with a CLI, and the rest is up to you.
-
-cmux is a primitive, not a solution. It gives you a terminal, a browser, notifications, workspaces, splits, tabs, and a CLI to control all of it. cmux doesn't force you into an opinionated way to use coding agents. What you build with the primitives is yours.
-
-The best developers have always built their own tools. Nobody has figured out the best way to work with agents yet, and the teams building closed products definitely haven't either. The developers closest to their own codebases will figure it out first.
-
-Give a million developers composable primitives and they'll collectively find the most efficient workflows faster than any product team could design top-down.
-
-## Documentation
-
-For more info on how to configure cmux, [head over to our docs](https://cmux.com/docs/getting-started?utm_source=readme).
-
-## Keyboard Shortcuts
-
-### Workspaces
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ N | New workspace |
-| ⌘ 1–8 | Jump to workspace 1–8 |
-| ⌘ 9 | Jump to last workspace |
-| ⌃ ⌘ ] | Next workspace |
-| ⌃ ⌘ [ | Previous workspace |
-| ⌘ ⇧ W | Close workspace |
-| ⌘ ⇧ R | Rename workspace |
-| ⌘ B | Toggle sidebar |
-
-### Surfaces
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ T | New surface |
-| ⌘ ⇧ ] | Next surface |
-| ⌘ ⇧ [ | Previous surface |
-| ⌃ Tab | Next surface |
-| ⌃ ⇧ Tab | Previous surface |
-| ⌃ 1–8 | Jump to surface 1–8 |
-| ⌃ 9 | Jump to last surface |
-| ⌘ W | Close surface |
-
-### Split Panes
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ D | Split right |
-| ⌘ ⇧ D | Split down |
-| ⌥ ⌘ ← → ↑ ↓ | Focus pane directionally |
-| ⌘ ⇧ H | Flash focused panel |
-
-### Browser
-
-Browser developer-tool shortcuts follow Safari defaults and are customizable in `Settings → Keyboard Shortcuts`.
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ ⇧ L | Open browser in split |
-| ⌘ L | Focus address bar |
-| ⌘ [ | Back |
-| ⌘ ] | Forward |
-| ⌘ R | Reload page |
-| ⌥ ⌘ I | Toggle Developer Tools (Safari default) |
-| ⌥ ⌘ C | Show JavaScript Console (Safari default) |
-
-### Notifications
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ I | Show notifications panel |
-| ⌘ ⇧ U | Jump to latest unread |
-
-### Find
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ F | Find |
-| ⌘ G / ⌘ ⇧ G | Find next / previous |
-| ⌘ ⇧ F | Hide find bar |
-| ⌘ E | Use selection for find |
-
-### Terminal
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ K | Clear scrollback |
-| ⌘ C | Copy (with selection) |
-| ⌘ V | Paste |
-| ⌘ + / ⌘ - | Increase / decrease font size |
-| ⌘ 0 | Reset font size |
-
-### Window
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘ ⇧ N | New window |
-| ⌘ ⇧ O | Reopen previous session |
-| ⌘ , | Settings |
-| ⌘ ⇧ , | Reload configuration |
-| ⌘ Q | Quit |
-
-## Nightly Builds
-
-[Download cmux NIGHTLY](https://github.com/manaflow-ai/cmux/releases/download/nightly/cmux-nightly-macos.dmg)
-
-cmux NIGHTLY is a separate app with its own bundle ID, so it runs alongside the stable version. Built automatically from the latest `main` commit and auto-updates via its own Sparkle feed.
-
-Report nightly bugs on [GitHub Issues](https://github.com/manaflow-ai/cmux/issues) or in [#nightly-bugs on Discord](https://discord.gg/xsgFEVrWCZ).
-
-## Session restore
-
-Quitting cmux saves the current session. On relaunch, cmux restores:
-- Window/workspace/pane layout
-- Working directories
-- Terminal scrollback (best effort)
-- Browser URL and navigation history
-- Saved Claude Code and Codex sessions, when cmux has a resume token for the panel
-
-If you need to reapply the last saved snapshot manually, use:
-- `File > Reopen Previous Session`
-- `⌘ ⇧ O`
-- `cmux restore-session`
-
-cmux does **not** restore arbitrary live terminal process state. tmux, vim, shells, and other tools without a cmux resume flow still reopen as normal terminals rather than resuming in-process state.
-
-## Star History
-
-<a href="https://star-history.com/#manaflow-ai/cmux&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=manaflow-ai/cmux&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=manaflow-ai/cmux&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=manaflow-ai/cmux&type=Date" width="600" />
- </picture>
-</a>
-
-## Contributing
-
-Ways to get involved:
-
-- Follow us on X for updates [@manaflowai](https://x.com/manaflowai), [@lawrencecchen](https://x.com/lawrencecchen), and [@austinywang](https://x.com/austinywang)
-- Join the conversation on [Discord](https://discord.gg/xsgFEVrWCZ)
-- Create and participate in [GitHub issues](https://github.com/manaflow-ai/cmux/issues) and [discussions](https://github.com/manaflow-ai/cmux/discussions)
-- Let us know what you're building with cmux
-
-## Community
-
-- [Discord](https://discord.gg/xsgFEVrWCZ)
-- [GitHub](https://github.com/manaflow-ai/cmux)
-- [X / Twitter](https://twitter.com/manaflowai)
-- [YouTube](https://www.youtube.com/channel/UCAa89_j-TWkrXfk9A3CbASw)
-- [LinkedIn](https://www.linkedin.com/company/manaflow-ai/)
-- [Reddit](https://www.reddit.com/r/cmux/)
-
-## Founder's Edition
-
-cmux is free, open source, and always will be. If you'd like to support development and get early access to what's coming next:
-
-**[Get Founder's Edition](https://buy.stripe.com/3cI00j2Ld0it5OU33r5EY0q)**
-
-- **Prioritized feature requests/bug fixes**
-- **Early access: cmux AI that gives you context on every workspace, tab and panel**
-- **Early access: iOS app with terminals synced between desktop and phone**
-- **Early access: Cloud VMs**
-- **Early access: Voice mode**
-- **My personal iMessage/WhatsApp**
+- Upstream terminal everything is built on: [manaflow-ai/cmux](https://github.com/manaflow-ai/cmux).
+- Forked from: [rassul-red/gmuxcmux](https://github.com/rassul-red/gmuxcmux).
+- Agents Panel concept: PR #1 by [@dbekzhan](https://github.com/dbekzhan).
+- Sprite system, world store, and Agents Canvas: this fork.
 
 ## License
 
-cmux is open source under [GPL-3.0-or-later](LICENSE).
-
-If your organization cannot comply with GPL, a commercial license is available. Contact [founders@manaflow.com](mailto:founders@manaflow.com) for details.
-# gmuxcmux
+GPL-3.0-or-later, inherited from upstream cmux. See [LICENSE](./LICENSE).
