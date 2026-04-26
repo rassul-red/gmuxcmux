@@ -5,6 +5,31 @@ import Foundation
 import Bonsplit
 #endif
 
+/// Visible motion phase for a ghost in the dashboard's room scene
+/// (issue #17). Independent of `GhostState` (which describes *what* the
+/// agent is doing). Motion describes *where* the ghost is on screen.
+///
+/// - `spawning`:  freshly observed session that has never had a tool_use yet
+///                (i.e. the ghost just appeared in the room).
+/// - `wandering`: idle drift around the room, including the post-launch idle
+///                collapse where a previously-seated ghost gets up and leaves
+///                its desk.
+/// - `walking`:   moving toward an assigned table after the agent launched
+///                in its terminal tab.
+/// - `settled`:   parked at its assigned table with the agent active.
+public enum GhostMotion: String, Codable, Equatable, Sendable {
+    case spawning
+    case wandering
+    case walking
+    case settled
+
+    /// How long the `walking` animation lasts before the ghost is treated as
+    /// `settled` at its desk. The JS overlay reuses this value (mirrored as
+    /// `WALK_DURATION_SECONDS` in `ghost-room-overlay.js`) so Swift and JS
+    /// agree on when the ghost arrives.
+    public static let walkDuration: TimeInterval = 2.0
+}
+
 /// One ghost in a project roster.
 public struct GhostEntry: Identifiable, Equatable, Sendable {
     public let id: String
@@ -14,19 +39,36 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
     /// Lifecycle phase for the renderer (Issue #14). Defaults to `.idle` so
     /// existing callers and tests stay source-compatible.
     public var lifecycle: GhostLifecycle
+    /// Issue #17: deterministic seat in the room. `nil` until the agent
+    /// launches in this terminal tab (first non-Idle `tool_use` after Idle).
+    /// Once assigned, the seat stays bound to this ghost so subsequent
+    /// idle/active flips return to the same chair instead of musical-chairs.
+    public var tableID: Int?
+    /// Issue #17: visible motion phase, derived per-snapshot from
+    /// `state`, `tableID`, and `motionStartedAt`.
+    public var motion: GhostMotion
+    /// Wall-clock timestamp the current `motion` phase started.
+    /// JS overlay uses this to drive the walk animation.
+    public var motionStartedAt: Date?
 
     public init(
         id: String,
         state: GhostState = .Idle,
         label: String = "",
         lastActivity: Date? = nil,
-        lifecycle: GhostLifecycle = .idle
+        lifecycle: GhostLifecycle = .idle,
+        tableID: Int? = nil,
+        motion: GhostMotion = .spawning,
+        motionStartedAt: Date? = nil
     ) {
         self.id = id
         self.state = state
         self.label = label
         self.lastActivity = lastActivity
         self.lifecycle = lifecycle
+        self.tableID = tableID
+        self.motion = motion
+        self.motionStartedAt = motionStartedAt
     }
 
     public var ghostID: String { id }
@@ -89,11 +131,24 @@ public final class GhostRosterManager: ObservableObject {
     /// lands; until then, it is the dlog hook used for verification.
     public var onDelta: DeltaObserver?
 
+    /// Issue #17 per-session state attached to a transcript URL. We track the
+    /// assigned seat (`tableID`) and the motion-phase start time separately
+    /// from the `GhostStateMachine` so the state machine stays a pure mapping
+    /// of `tool_use → GhostState`.
+    private struct SessionMotion: Equatable {
+        var tableID: Int?
+        var motionStartedAt: Date?
+        /// Captures the `state` at the time motion last changed. Used to
+        /// detect post-launch idle-collapse so we can flip back to wandering.
+        var lastSnapshotState: GhostState
+    }
+
     private struct ProjectContext {
         let cwd: String
         let watcher: ClaudeTranscriptWatcher
         var sessionStates: [URL: GhostStateMachine]
         var sessionLabels: [URL: String]
+        var sessionMotion: [URL: SessionMotion]
         var orderedSessions: [URL]
         var lastSnapshot: ProjectGhostRoster?
     }
@@ -158,6 +213,7 @@ public final class GhostRosterManager: ObservableObject {
                 watcher: watcher,
                 sessionStates: [:],
                 sessionLabels: [:],
+                sessionMotion: [:],
                 orderedSessions: [],
                 lastSnapshot: initialSnapshot
             )
@@ -240,7 +296,7 @@ public final class GhostRosterManager: ObservableObject {
         var machine = ctx.sessionStates[sessionURL] ?? GhostStateMachine()
         mutate(&machine)
         ctx.sessionStates[sessionURL] = machine
-        let snapshot = buildSnapshot(projectID: projectID, ctx: ctx, now: Date())
+        let snapshot = buildSnapshot(projectID: projectID, ctx: &ctx, now: Date())
         ctx.lastSnapshot = snapshot
         projects[projectID] = ctx
         commitOnMain(projectID: projectID, snapshot: snapshot)
@@ -317,18 +373,36 @@ public final class GhostRosterManager: ObservableObject {
                     // walkingDuration window (Issue #14).
                     machine.markSpawned(at: event.parsedTimestamp())
                 }
-                machine.apply(toolName: name, at: event.parsedTimestamp())
+                let result = machine.apply(toolName: name, at: event.parsedTimestamp())
                 ctx.sessionStates[sessionKey] = machine
                 ctx.sessionLabels[sessionKey] = name
                 if isFirstObservation {
                     ctx.orderedSessions.append(sessionKey)
+                }
+
+                // Issue #17: agent launched (Idle → active). Assign a free
+                // table if the session does not have one yet, and (re)start
+                // the walking-motion clock so the JS overlay animates the
+                // ghost to its desk.
+                if result.didLaunch {
+                    var motion = ctx.sessionMotion[sessionKey] ?? SessionMotion(
+                        tableID: nil,
+                        motionStartedAt: nil,
+                        lastSnapshotState: .Idle
+                    )
+                    if motion.tableID == nil {
+                        motion.tableID = Self.assignFreeTable(in: ctx.sessionMotion)
+                    }
+                    motion.motionStartedAt = event.parsedTimestamp()
+                    motion.lastSnapshotState = result.state
+                    ctx.sessionMotion[sessionKey] = motion
                 }
                 changed = true
             }
         }
 
         let now = Date()
-        let snapshot = buildSnapshot(projectID: projectID, ctx: ctx, now: now)
+        let snapshot = buildSnapshot(projectID: projectID, ctx: &ctx, now: now)
 
         // Even when no `tool_use` lines arrived (`changed == false`) the time
         // axis can still flip a session from active to `.Idle`, so always
@@ -348,7 +422,7 @@ public final class GhostRosterManager: ObservableObject {
         dispatchPreconditionOffMain()
         for projectID in projects.keys {
             guard var ctx = projects[projectID] else { continue }
-            let snapshot = buildSnapshot(projectID: projectID, ctx: ctx, now: now)
+            let snapshot = buildSnapshot(projectID: projectID, ctx: &ctx, now: now)
             if ctx.lastSnapshot != snapshot {
                 ctx.lastSnapshot = snapshot
                 projects[projectID] = ctx
@@ -377,23 +451,86 @@ public final class GhostRosterManager: ObservableObject {
         idleRefreshTimer = nil
     }
 
-    private func buildSnapshot(projectID: String, ctx: ProjectContext, now: Date) -> ProjectGhostRoster {
+    private func buildSnapshot(projectID: String, ctx: inout ProjectContext, now: Date) -> ProjectGhostRoster {
         // Deterministic ordering: oldest-seen first; cap at 5.
         let sessions = ctx.orderedSessions.prefix(Self.maxGhostsPerProject)
-        let entries: [GhostEntry] = sessions.enumerated().map { (idx, url) in
+        var entries: [GhostEntry] = []
+        entries.reserveCapacity(sessions.count)
+
+        for url in sessions {
             let machine = ctx.sessionStates[url] ?? GhostStateMachine()
             let label = ctx.sessionLabels[url] ?? ""
             let id = "\(projectID)#\(url.deletingPathExtension().lastPathComponent)"
-            let _ = idx // index reserved for stable ordering, unused for now
-            return GhostEntry(
+            let state = machine.currentState(now: now)
+
+            var motion = ctx.sessionMotion[url] ?? SessionMotion(
+                tableID: nil,
+                motionStartedAt: nil,
+                lastSnapshotState: .Idle
+            )
+
+            // Idle collapse after a launch: ghost gets up from its desk and
+            // wanders again, but keeps `tableID` so the next launch returns
+            // it to the same chair (no musical chairs).
+            if state == .Idle && motion.lastSnapshotState != .Idle {
+                motion.motionStartedAt = now
+            }
+            motion.lastSnapshotState = state
+            ctx.sessionMotion[url] = motion
+
+            let phase = Self.derivePhase(
+                state: state,
+                tableID: motion.tableID,
+                motionStartedAt: motion.motionStartedAt,
+                now: now
+            )
+
+            entries.append(GhostEntry(
                 id: id,
-                state: machine.currentState(now: now),
+                state: state,
                 label: label,
                 lastActivity: machine.lastActivity,
-                lifecycle: machine.currentLifecycle(now: now)
-            )
+                lifecycle: machine.currentLifecycle(now: now),
+                tableID: motion.tableID,
+                motion: phase,
+                motionStartedAt: motion.motionStartedAt
+            ))
         }
         return ProjectGhostRoster(projectID: projectID, ghosts: Array(entries))
+    }
+
+    /// Pick the lowest free seat index in `0..<maxGhostsPerProject`. Lowest-
+    /// index policy keeps the assignment deterministic and idempotent across
+    /// rebuilds.
+    private static func assignFreeTable(in sessionMotion: [URL: SessionMotion]) -> Int? {
+        var taken = Set<Int>()
+        for (_, m) in sessionMotion {
+            if let id = m.tableID { taken.insert(id) }
+        }
+        for candidate in 0..<maxGhostsPerProject where !taken.contains(candidate) {
+            return candidate
+        }
+        return nil
+    }
+
+    /// Derive the visible motion phase from the seat assignment + state +
+    /// elapsed time since the motion clock started.
+    private static func derivePhase(
+        state: GhostState,
+        tableID: Int?,
+        motionStartedAt: Date?,
+        now: Date
+    ) -> GhostMotion {
+        // No seat yet → ghost is still floating around looking for one.
+        guard tableID != nil else { return .spawning }
+        // Idle (either pre-activity or post-collapse) → wandering.
+        if state == .Idle { return .wandering }
+        // Active and we know when the walk started → settle after walkDuration.
+        if let started = motionStartedAt,
+           now.timeIntervalSince(started) >= GhostMotion.walkDuration {
+            return .settled
+        }
+        return .walking
     }
 
     private func commitOnMain(projectID: String, snapshot: ProjectGhostRoster) {
@@ -404,7 +541,7 @@ public final class GhostRosterManager: ObservableObject {
             dlog(
                 "ghost.roster.delta project=\(projectID) "
                 + "ghosts=\(snapshot.ghosts.count) "
-                + "states=\(snapshot.ghosts.map { "\($0.state.rawValue):\($0.label)" }.joined(separator: ","))"
+                + "states=\(snapshot.ghosts.map { "\($0.state.rawValue):\($0.label):table=\($0.tableID.map(String.init) ?? "-"):motion=\($0.motion.rawValue)" }.joined(separator: ","))"
             )
             #endif
             self.onDelta?(projectID, snapshot)
@@ -418,4 +555,3 @@ public final class GhostRosterManager: ObservableObject {
         dispatchPrecondition(condition: .notOnQueue(.main))
     }
 }
-

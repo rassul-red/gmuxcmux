@@ -37,6 +37,19 @@ public enum GhostLifecycle: String, Codable, Equatable, Sendable {
     }
 }
 
+/// Result of applying one `tool_use` event to a `GhostStateMachine`.
+///
+/// `didLaunch` is the "agent launched in this terminal tab" signal that
+/// drives issue #17's walk-to-free-table behaviour. It is `true` when the
+/// previous observed state was `.Idle` (either no prior activity, or the 60s
+/// idle threshold had collapsed the session) and the new event lands a
+/// non-`.Idle` state. The roster layer turns this into a table assignment
+/// and the JS overlay turns the assignment into a walking animation.
+public struct GhostStateApplyResult: Equatable, Sendable {
+    public let state: GhostState
+    public let didLaunch: Bool
+}
+
 /// Deterministic mapping from a Claude Code `tool_use.name` to a `GhostState`,
 /// plus a 60-second idle collapse.
 ///
@@ -87,11 +100,13 @@ public struct GhostStateMachine: Sendable {
         }
     }
 
-    /// Records a new tool_use event and returns the resulting state.
+    /// Records a new tool_use event and returns the resulting state plus a
+    /// `didLaunch` flag (true if this event woke the session up from Idle).
     /// Fresh activity also auto-clears any active warning — the agent has
     /// resumed working, so the warning lifecycle no longer applies.
     @discardableResult
-    public mutating func apply(toolName: String, at timestamp: Date) -> GhostState {
+    public mutating func apply(toolName: String, at timestamp: Date) -> GhostStateApplyResult {
+        let priorState = currentState(now: timestamp)
         let mapped = Self.mapToolName(toolName)
         lastState = mapped
         lastActivityAt = timestamp
@@ -99,7 +114,8 @@ public struct GhostStateMachine: Sendable {
         if spawnedAt == nil {
             spawnedAt = timestamp
         }
-        return mapped
+        let didLaunch = priorState == .Idle && mapped != .Idle
+        return GhostStateApplyResult(state: mapped, didLaunch: didLaunch)
     }
 
     /// Mark this ghost as freshly spawned (e.g. on first observation of a

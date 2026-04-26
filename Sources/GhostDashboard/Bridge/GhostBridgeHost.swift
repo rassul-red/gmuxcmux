@@ -267,13 +267,25 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
 
     // MARK: - Snapshot / delta builders
 
+    /// ISO-8601 with fractional seconds — same format the dashboard's other
+    /// timestamps use, so the JS overlay can `Date.parse` it directly. Held
+    /// in a static so the formatter cost is paid once per process.
+    private static let iso8601: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
     private static func entryState(from entry: GhostEntry) -> GhostEntryState {
         return GhostEntryState(
             ghostID: entry.id,
             state: entry.state.rawValue,
             label: entry.label,
             lastActivityAt: entry.lastActivity.map { $0.timeIntervalSince1970 * 1000 },
-            lifecycle: entry.lifecycle.rawValue
+            lifecycle: entry.lifecycle.rawValue,
+            motion: entry.motion.rawValue,
+            tableID: entry.tableID,
+            motionStartedAt: entry.motionStartedAt.map { iso8601.string(from: $0) }
         )
     }
 
