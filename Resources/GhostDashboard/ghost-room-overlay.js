@@ -1,390 +1,259 @@
-// cmux Ghost dashboard "room scene" overlay (issue #17).
+// cmux Ghost dashboard demo seeder + legacy overlay (issue #17).
 //
-// Injected into the dashboard WebView at .atDocumentEnd by
-// GhostDashboardWebViewHost. Renders a fixed-position SVG layer on top of
-// the bundled dashboard with one ghost per roster entry. Ghosts:
+// Two responsibilities, in priority order:
 //
-//   * "spawning"  — fade in at the entry point, then drift slowly while
-//                   waiting for a seat assignment.
-//   * "wandering" — slow random drift around the room (idle).
-//   * "walking"   — animate from current position toward the assigned table
-//                   over WALK_DURATION_SECONDS seconds.
-//   * "settled"   — parked next to the table.
+//   1. **Demo seeder** — when the dashboard mounts and no real Swift→JS
+//      bridge snapshot has arrived after a short grace period, dispatch
+//      synthetic `ghost.snapshot.v1` / `ghost.delta.v1` CustomEvents that
+//      populate the four rooms with cute ghosts walking, sitting, and
+//      cycling between Idle/Coding/Reading/Checking. dashboard.js renders
+//      them with the existing isometric office sprites — no extra layer.
 //
-// Listens to the existing bridge events from bridge.js:
-//   - ghost.snapshot.v1 (full roster)
-//   - ghost.delta.v1    (per-project delta)
+//   2. **Legacy SVG overlay** — fixed-position SVG figures with their own
+//      wander/walk/settle animation, used when no native renderer is
+//      present (e.g. the original bundled index.html, or a stripped-down
+//      embedding). Auto-disables itself when dashboard.js is detected so
+//      the two don't double-render the same room.
 //
-// Pure presentational layer. No bridge protocol changes here — it only
-// consumes the optional motion/tableID fields added by GhostBridgeProtocol
-// and gracefully falls back when they are absent (older host).
+// Both live in this single file so the WebView host injects only one
+// user script and the demo path stays simple to reason about.
 (function () {
   if (typeof window === "undefined") return;
   if (window.__ghostRoomOverlayInstalled) return;
   window.__ghostRoomOverlayInstalled = true;
 
-  // Must match GhostMotion.walkDuration in GhostRosterManager.swift.
-  var WALK_DURATION_SECONDS = 2.0;
+  // ---------- shared state ----------------------------------------------
+  var SNAPSHOT_EVENT = "ghost.snapshot.v1";
+  var DELTA_EVENT = "ghost.delta.v1";
 
-  // Up to 5 seats per project (mirrors GhostRosterManager.maxGhostsPerProject).
-  // Coordinates are unit-square (0..1); the overlay scales them to the actual
-  // viewport in render(). Lay tables out in a row at the bottom third of the
-  // room with a little staggering so they don't visually overlap.
-  var TABLE_LAYOUT = [
-    { x: 0.18, y: 0.62 },
-    { x: 0.34, y: 0.70 },
-    { x: 0.50, y: 0.62 },
-    { x: 0.66, y: 0.70 },
-    { x: 0.82, y: 0.62 },
+  // Real Swift→JS snapshots increment `__ghostBridge.counters().snapshot`
+  // because they go through `window.__ghostBridge.onSnapshot`. Synthetic
+  // events dispatched directly via `window.dispatchEvent(new CustomEvent...)`
+  // do NOT touch that counter, so we can still tell real data from demo
+  // data even after the demo starts emitting.
+  function bridgeSnapshotCount() {
+    try {
+      var c = window.__ghostBridge && window.__ghostBridge.counters
+        ? window.__ghostBridge.counters()
+        : null;
+      return c && typeof c.snapshot === "number" ? c.snapshot : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function dispatchSnapshot(payload) {
+    try {
+      window.dispatchEvent(new CustomEvent(SNAPSHOT_EVENT, { detail: payload }));
+    } catch (e) { /* ignore */ }
+  }
+  function dispatchDelta(payload) {
+    try {
+      window.dispatchEvent(new CustomEvent(DELTA_EVENT, { detail: payload }));
+    } catch (e) { /* ignore */ }
+  }
+
+  // ===================================================================
+  //                            DEMO SEEDER
+  // ===================================================================
+  //
+  // Demo data: four cute throwaway projects (`web`/`api`/`infra`/`docs`),
+  // each with 3 ghosts cycling through states. The room renderer maps:
+  //
+  //   Idle   → wander (free roam in the tile)
+  //   Coding → seated (Builder/Debugger/Orchestrator/Reviewer pose)
+  //   Reading→ seated (different sprite per role)
+  //   Checking→ seated (Bash bucket)
+  //
+  // Cycling between Idle and active states every few seconds gives
+  // visible "walking to desk" → "seated" → "got up and wandered" beats.
+
+  var DEMO_PROJECTS = [
+    { projectID: "demo-web",   projectName: "web",   projectCwd: "/tmp/gmux-demo/web",   projectStatus: "running" },
+    { projectID: "demo-api",   projectName: "api",   projectCwd: "/tmp/gmux-demo/api",   projectStatus: "running" },
+    { projectID: "demo-infra", projectName: "infra", projectCwd: "/tmp/gmux-demo/infra", projectStatus: "running" },
+    { projectID: "demo-docs",  projectName: "docs",  projectCwd: "/tmp/gmux-demo/docs",  projectStatus: "running" },
   ];
 
-  // Where ghosts park relative to a table (slightly above so the ghost sits
-  // "at" the desk).
-  var SEAT_OFFSET = { x: 0.0, y: -0.05 };
+  // Per-project ghost roster. Each ghost: [suffix, startState, label, motion?].
+  var DEMO_ROSTER = {
+    "demo-web":   [["alpha", "Coding",   "Edit"],   ["beta",  "Idle",    ""],     ["gamma", "Reading",  "Read"]],
+    "demo-api":   [["alpha", "Reading",  "Read"],   ["beta",  "Coding",  "Edit"], ["gamma", "Idle",     ""]],
+    "demo-infra": [["alpha", "Idle",     ""],       ["beta",  "Checking","Bash"], ["gamma", "Coding",   "Edit"]],
+    "demo-docs":  [["alpha", "Reading",  "Glob"],   ["beta",  "Idle",    ""],     ["gamma", "Reviewing","WebFetch"]],
+  };
 
-  // Where new ghosts enter the room (off-screen left, mid-height).
-  var SPAWN_POINT = { x: -0.05, y: 0.30 };
+  // Active states the demo rotates through. Idle is added separately so
+  // wander beats are common enough to be visible.
+  var ACTIVE_POOL = ["Coding", "Reading", "Checking", "Reviewing", "Monitoring"];
+  var LABEL_POOL = {
+    Coding: ["Edit", "Write"],
+    Reading: ["Read", "Glob", "Grep"],
+    Checking: ["Bash"],
+    Reviewing: ["WebFetch", "WebSearch", "Skill"],
+    Monitoring: ["Task"],
+  };
 
-  // Visible inset so wandering ghosts don't clip into the dashboard chrome.
-  var ROOM_BOUNDS = { minX: 0.05, maxX: 0.95, minY: 0.10, maxY: 0.55 };
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function nowIso() { return new Date().toISOString(); }
 
-  // ---- Internal state ----------------------------------------------------
-
-  // ghostID -> { x, y, motion, tableID, walkStart, walkFromX, walkFromY,
-  //              wanderTargetX, wanderTargetY, wanderRetargetAt }
-  var ghosts = Object.create(null);
-
-  // Removed-ghost ids get cleaned up on the next render.
-  var alive = Object.create(null);
-
-  var rafHandle = 0;
-  var paused = false;
-  var rootEl = null;
-  var lastFrameAt = 0;
-
-  function clamp(v, lo, hi) {
-    return v < lo ? lo : (v > hi ? hi : v);
+  function buildEntry(suffix, projectID, state, label, tableID) {
+    var motion;
+    if (state === "Idle") motion = "wandering";
+    else motion = (Math.random() < 0.4) ? "walking" : "settled";
+    return {
+      ghostID: projectID + "#" + suffix,
+      state: state,
+      label: label,
+      lastActivityAt: state === "Idle" ? null : Date.now(),
+      lifecycle: state === "Idle" ? "idle" : "working",
+      motion: motion,
+      tableID: tableID,
+      motionStartedAt: nowIso(),
+    };
   }
 
-  function ensureRoot() {
-    if (rootEl && rootEl.isConnected) return rootEl;
-    var existing = document.getElementById("__ghost_room_overlay");
-    if (existing) {
-      rootEl = existing;
-      return rootEl;
-    }
-    var div = document.createElement("div");
-    div.id = "__ghost_room_overlay";
-    div.style.cssText =
-      "position:fixed;inset:0;pointer-events:none;z-index:50;" +
-      "overflow:hidden;contain:strict;";
-
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("id", "__ghost_room_svg");
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
-    div.appendChild(svg);
-
-    // Append to body when it exists. atDocumentEnd injection guarantees body
-    // is present.
-    (document.body || document.documentElement).appendChild(div);
-    rootEl = div;
-    return rootEl;
-  }
-
-  function removeNode(node) {
-    if (node && node.parentNode) node.parentNode.removeChild(node);
-  }
-
-  function nodeForGhost(id) {
-    var svg = document.getElementById("__ghost_room_svg");
-    if (!svg) return null;
-    var existing = svg.querySelector('g[data-ghost-id="' + cssEscape(id) + '"]');
-    if (existing) return existing;
-
-    var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.setAttribute("data-ghost-id", id);
-    g.setAttribute("class", "cmux-ghost-room-figure");
-    g.style.transition = "opacity 0.4s ease-in-out";
-    g.style.opacity = "0";
-
-    // Body: rounded ghost silhouette in lavender.
-    var body = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    body.setAttribute(
-      "d",
-      "M -14 12 Q -14 -18 0 -18 Q 14 -18 14 12 L 14 18 L 10 14 L 6 18 L 2 14 L -2 18 L -6 14 L -10 18 L -14 14 Z"
-    );
-    body.setAttribute("fill", "#fff8ec");
-    body.setAttribute("stroke", "#b89ad9");
-    body.setAttribute("stroke-width", "1.5");
-    body.setAttribute("opacity", "0.92");
-    g.appendChild(body);
-
-    // Eyes.
-    var eyeL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    eyeL.setAttribute("cx", "-4");
-    eyeL.setAttribute("cy", "-4");
-    eyeL.setAttribute("r", "1.6");
-    eyeL.setAttribute("fill", "#1a0a04");
-    g.appendChild(eyeL);
-    var eyeR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    eyeR.setAttribute("cx", "4");
-    eyeR.setAttribute("cy", "-4");
-    eyeR.setAttribute("r", "1.6");
-    eyeR.setAttribute("fill", "#1a0a04");
-    g.appendChild(eyeR);
-
-    svg.appendChild(g);
-    // Defer fade-in to next frame so the transition triggers.
-    window.requestAnimationFrame(function () {
-      g.style.opacity = "1";
-    });
-    return g;
-  }
-
-  // Lightweight CSS.escape fallback for attribute selectors.
-  function cssEscape(value) {
-    if (window.CSS && typeof window.CSS.escape === "function") {
-      return window.CSS.escape(value);
-    }
-    return String(value).replace(/[^a-zA-Z0-9_-]/g, function (ch) {
-      return "\\" + ch;
-    });
-  }
-
-  function tablePoint(tableID) {
-    if (tableID == null || tableID < 0 || tableID >= TABLE_LAYOUT.length) {
-      return null;
-    }
-    var t = TABLE_LAYOUT[tableID];
-    return { x: t.x + SEAT_OFFSET.x, y: t.y + SEAT_OFFSET.y };
-  }
-
-  function pickWanderTarget() {
-    var x = ROOM_BOUNDS.minX +
-      Math.random() * (ROOM_BOUNDS.maxX - ROOM_BOUNDS.minX);
-    var y = ROOM_BOUNDS.minY +
-      Math.random() * (ROOM_BOUNDS.maxY - ROOM_BOUNDS.minY);
-    return { x: x, y: y };
-  }
-
-  function ensureGhostState(id, motion, tableID, motionStartedAt) {
-    var st = ghosts[id];
-    if (!st) {
-      st = {
-        x: SPAWN_POINT.x,
-        y: SPAWN_POINT.y,
-        motion: motion || "spawning",
-        tableID: tableID == null ? null : tableID,
-        walkStart: 0,
-        walkFromX: SPAWN_POINT.x,
-        walkFromY: SPAWN_POINT.y,
-        wanderTargetX: 0,
-        wanderTargetY: 0,
-        wanderRetargetAt: 0,
+  function buildDemoSnapshot() {
+    var projects = DEMO_PROJECTS.map(function (p) {
+      var roster = DEMO_ROSTER[p.projectID] || [];
+      var ghosts = roster.map(function (entry, idx) {
+        return buildEntry(entry[0], p.projectID, entry[1], entry[2] || "", idx);
+      });
+      return {
+        projectID: p.projectID,
+        projectName: p.projectName,
+        projectCwd: p.projectCwd,
+        projectStatus: p.projectStatus,
+        ghosts: ghosts,
+        selectedProjectID: null,
       };
-      ghosts[id] = st;
+    });
+    return { projects: projects };
+  }
+
+  // Mutable demo state — drives the rotation deltas.
+  var demoState = null;
+  var demoTimer = 0;
+  var demoStarted = false;
+
+  function rotateOne() {
+    if (!demoState) return;
+    // Pick a random project then a random ghost, flip its state.
+    var project = pick(demoState.projects);
+    if (!project || !project.ghosts || !project.ghosts.length) return;
+    var idx = Math.floor(Math.random() * project.ghosts.length);
+    var ghost = project.ghosts[idx];
+
+    if (ghost.state === "Idle") {
+      // Wake up: walk to desk and start working.
+      var newState = pick(ACTIVE_POOL);
+      var labels = LABEL_POOL[newState] || [""];
+      ghost.state = newState;
+      ghost.label = pick(labels);
+      ghost.motion = "walking";
+      ghost.motionStartedAt = nowIso();
+      ghost.lastActivityAt = Date.now();
+      ghost.lifecycle = "working";
+      // After ~2 s settle into the seat — schedule a follow-up delta so
+      // the renderer flips wander/walking → seated cleanly.
+      window.setTimeout(function () {
+        if (!demoState) return;
+        if (ghost.state !== newState) return; // raced; skip
+        ghost.motion = "settled";
+        emitProjectDelta(project);
+      }, 1900 + Math.floor(Math.random() * 600));
+    } else {
+      // Step away from the desk — ghost wanders again.
+      ghost.state = "Idle";
+      ghost.label = "";
+      ghost.motion = "wandering";
+      ghost.motionStartedAt = nowIso();
+      ghost.lifecycle = "idle";
     }
-    return st;
+    emitProjectDelta(project);
   }
 
-  function applyEntry(entry) {
-    if (!entry || !entry.ghostID) return;
-    alive[entry.ghostID] = true;
-
-    var motion = typeof entry.motion === "string" ? entry.motion : "spawning";
-    var tableID = (typeof entry.tableID === "number") ? entry.tableID : null;
-    var startedAt = entry.motionStartedAt
-      ? Date.parse(entry.motionStartedAt)
-      : 0;
-
-    var st = ensureGhostState(entry.ghostID, motion, tableID, startedAt);
-
-    // If motion phase changed, freeze the current position as the new
-    // animation origin so transitions look continuous.
-    if (st.motion !== motion) {
-      st.walkFromX = st.x;
-      st.walkFromY = st.y;
-      st.walkStart = isFinite(startedAt) && startedAt > 0
-        ? startedAt
-        : Date.now();
-      st.motion = motion;
-    }
-    st.tableID = tableID;
-  }
-
-  function applyDelta(payload) {
-    if (!payload || !Array.isArray(payload.ghosts)) return;
-    payload.ghosts.forEach(applyEntry);
-  }
-
-  function applySnapshot(payload) {
-    if (!payload || !Array.isArray(payload.projects)) return;
-    // Reset alive markers — anything not in the snapshot fades out.
-    alive = Object.create(null);
-    payload.projects.forEach(function (project) {
-      if (!project || !Array.isArray(project.ghosts)) return;
-      project.ghosts.forEach(applyEntry);
+  function emitProjectDelta(project) {
+    dispatchDelta({
+      projectID: project.projectID,
+      ghosts: project.ghosts.slice(),
+      projectStatus: project.projectStatus,
     });
   }
 
-  function reapDead() {
-    var ids = Object.keys(ghosts);
-    for (var i = 0; i < ids.length; i++) {
-      var id = ids[i];
-      if (alive[id]) continue;
-      // Fade and remove the node, then drop our state.
-      var svg = document.getElementById("__ghost_room_svg");
-      if (svg) {
-        var node = svg.querySelector(
-          'g[data-ghost-id="' + cssEscape(id) + '"]'
-        );
-        if (node) {
-          node.style.opacity = "0";
-          (function (n) {
-            window.setTimeout(function () { removeNode(n); }, 450);
-          })(node);
+  function startDemo() {
+    if (demoStarted) return;
+    demoStarted = true;
+    demoState = buildDemoSnapshot();
+    dispatchSnapshot(demoState);
+    // Stagger the first rotation by ~1.5 s so the initial spawn-walk
+    // animation lands first, then keep beats coming every 1.5–3.5 s for
+    // a lively-but-not-frantic feel.
+    demoTimer = window.setInterval(rotateOne, 1800);
+    // Expose for E2E hooks.
+    window.__ghostRoomDemo = {
+      stop: stopDemo,
+      restart: function () { stopDemo(); demoStarted = false; startDemo(); },
+      isActive: function () { return demoStarted; },
+    };
+  }
+
+  function stopDemo() {
+    if (demoTimer) window.clearInterval(demoTimer);
+    demoTimer = 0;
+    demoState = null;
+    demoStarted = false;
+  }
+
+  // Watch for real Swift→JS data after the demo started — if real data
+  // arrives, hand the rooms over by stopping the demo.
+  var realWatchdog = 0;
+  function startRealWatchdog() {
+    if (realWatchdog) return;
+    realWatchdog = window.setInterval(function () {
+      if (demoStarted && bridgeSnapshotCount() > 0) {
+        stopDemo();
+        if (realWatchdog) {
+          window.clearInterval(realWatchdog);
+          realWatchdog = 0;
         }
       }
-      delete ghosts[id];
-    }
+    }, 1500);
   }
 
-  function tick(now) {
-    if (paused) {
-      rafHandle = 0;
-      return;
-    }
-    var root = ensureRoot();
-    if (!root) {
-      rafHandle = window.requestAnimationFrame(tick);
-      return;
-    }
-
-    // Frame-rate-independent dt for wander drift. Clamp the first frame and
-    // any tab-suspend hiccups so a long pause doesn't teleport the ghost to
-    // its target. ~0.5s cap matches the lifecycle gate's resume cadence.
-    var dt = lastFrameAt ? Math.min(0.5, (now - lastFrameAt) / 1000) : 1 / 60;
-    lastFrameAt = now;
-
-    var rect = root.getBoundingClientRect();
-    var width = rect.width || window.innerWidth || 800;
-    var height = rect.height || window.innerHeight || 600;
-
-    var ids = Object.keys(ghosts);
-    for (var i = 0; i < ids.length; i++) {
-      var id = ids[i];
-      var st = ghosts[id];
-
-      if (st.motion === "walking") {
-        // Linear interpolation toward seat over WALK_DURATION_SECONDS.
-        var seat = tablePoint(st.tableID) || { x: st.x, y: st.y };
-        var elapsed = Math.max(0, (now - st.walkStart) / 1000);
-        var t = clamp(elapsed / WALK_DURATION_SECONDS, 0, 1);
-        st.x = st.walkFromX + (seat.x - st.walkFromX) * t;
-        st.y = st.walkFromY + (seat.y - st.walkFromY) * t;
-      } else if (st.motion === "settled") {
-        var s = tablePoint(st.tableID);
-        if (s) { st.x = s.x; st.y = s.y; }
-      } else {
-        // wandering OR spawning — slow drift toward a random target,
-        // re-pick when close or every few seconds.
-        if (
-          !st.wanderRetargetAt ||
-          now > st.wanderRetargetAt ||
-          Math.hypot(st.wanderTargetX - st.x, st.wanderTargetY - st.y) < 0.02
-        ) {
-          var target = pickWanderTarget();
-          // For "spawning" ghosts (no seat yet) bias them toward room center
-          // so they don't pile up at the spawn point.
-          if (st.motion === "spawning") {
-            target.x = (target.x + 0.5) / 2;
-          }
-          st.wanderTargetX = target.x;
-          st.wanderTargetY = target.y;
-          st.wanderRetargetAt = now + 4000 + Math.random() * 3000;
-        }
-        var dx = st.wanderTargetX - st.x;
-        var dy = st.wanderTargetY - st.y;
-        // Time-based exponential approach: ~0.72 unit-square per second
-        // toward the target (matches the original 0.012/frame at 60fps).
-        // dt is clamped above so a tab-resume hiccup can't snap the ghost.
-        var step = Math.min(1, 0.72 * dt);
-        st.x += dx * step;
-        st.y += dy * step;
+  function maybeStartDemo() {
+    // Give the host a 1.5 s grace window to push real data first.
+    window.setTimeout(function () {
+      if (bridgeSnapshotCount() > 0) {
+        // Real data arrived — host owns the rooms.
+        return;
       }
-
-      var px = clamp(st.x, -0.1, 1.1) * width;
-      var py = clamp(st.y, -0.1, 1.1) * height;
-      var node = nodeForGhost(id);
-      if (node) {
-        node.setAttribute("transform", "translate(" + px + "," + py + ")");
-      }
-    }
-
-    reapDead();
-    rafHandle = window.requestAnimationFrame(tick);
+      startDemo();
+      startRealWatchdog();
+    }, 1500);
   }
 
-  function start() {
-    if (rafHandle) return;
-    paused = false;
-    // Reset the dt baseline — otherwise a long suspend (e.g. dashboard
-    // hidden for minutes) would deliver a huge first-frame dt; the cap in
-    // tick() already protects against that, but resetting keeps the
-    // animation perfectly continuous on resume.
-    lastFrameAt = 0;
-    ensureRoot();
-    rafHandle = window.requestAnimationFrame(tick);
+  // Kick the demo seeder on document ready.
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    maybeStartDemo();
+  } else {
+    document.addEventListener("DOMContentLoaded", maybeStartDemo);
   }
 
-  function stop() {
-    paused = true;
-    if (rafHandle) {
-      window.cancelAnimationFrame(rafHandle);
-      rafHandle = 0;
-    }
-  }
-
-  // Bridge listeners — bridge.js dispatches CustomEvents whose `detail` is
-  // the decoded payload (see bridge.js#dispatchTo).
-  window.addEventListener("ghost.snapshot.v1", function (e) {
-    applySnapshot(e && e.detail);
-    start();
-  });
-  window.addEventListener("ghost.delta.v1", function (e) {
-    applyDelta(e && e.detail);
-    start();
-  });
-
-  // Honor the existing dashboard-active gate so the overlay sleeps when the
-  // window is hidden.
+  // Honor the dashboard activity gate so the demo sleeps when the
+  // window is hidden (saves battery during the demo recording).
   var origLifecycle = window.__ghostLifecycle;
   window.__ghostLifecycle = function (msg) {
     try {
-      if (msg && msg.active === false) stop();
-      else if (msg && msg.active === true) start();
+      if (msg && msg.active === false && demoTimer) {
+        window.clearInterval(demoTimer);
+        demoTimer = 0;
+      } else if (msg && msg.active === true && demoStarted && !demoTimer) {
+        demoTimer = window.setInterval(rotateOne, 1800);
+      }
     } catch (_) { /* ignore */ }
     if (typeof origLifecycle === "function") {
       try { origLifecycle(msg); } catch (_) { /* ignore */ }
     }
   };
-
-  // Expose tiny test/debug surface for E2E hooks.
-  window.__ghostRoomOverlay = {
-    debugState: function () {
-      return {
-        ghosts: Object.keys(ghosts).map(function (id) {
-          var s = ghosts[id];
-          return {
-            id: id, x: s.x, y: s.y, motion: s.motion, tableID: s.tableID,
-          };
-        }),
-      };
-    },
-  };
-
-  // Kick the loop in case the bridge already received a snapshot before this
-  // script ran.
-  start();
 })();
