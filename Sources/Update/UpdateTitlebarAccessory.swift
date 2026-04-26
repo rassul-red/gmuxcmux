@@ -256,6 +256,7 @@ struct TitlebarControlsView: View {
     let onToggleSidebar: () -> Void
     let onToggleNotifications: () -> Void
     let onNewTab: () -> Void
+    let onToggleAgentsPanel: () -> Void
     let visibilityMode: TitlebarControlsVisibilityMode
     @AppStorage("titlebarControlsStyle") private var styleRawValue = TitlebarControlsStyle.classic.rawValue
     @AppStorage(ShortcutHintDebugSettings.titlebarHintXKey) private var titlebarShortcutHintXOffset = ShortcutHintDebugSettings.defaultTitlebarHintX
@@ -407,6 +408,18 @@ struct TitlebarControlsView: View {
             .accessibilityIdentifier("titlebarControl.newTab")
             .accessibilityLabel(String(localized: "titlebar.newWorkspace.accessibilityLabel", defaultValue: "New Workspace"))
             .safeHelp(KeyboardShortcutSettings.Action.newTab.tooltip(String(localized: "titlebar.newWorkspace.tooltip", defaultValue: "New workspace")))
+
+            TitlebarControlButton(config: config, action: {
+                #if DEBUG
+                cmuxDebugLog("titlebar.toggleAgents")
+                #endif
+                onToggleAgentsPanel()
+            }) {
+                iconLabel(systemName: "person.2", config: config)
+            }
+            .accessibilityIdentifier("titlebarControl.toggleAgents")
+            .accessibilityLabel(String(localized: "titlebar.agents.accessibilityLabel", defaultValue: "Show Agents"))
+            .safeHelp(String(localized: "titlebar.agents.tooltip", defaultValue: "Show agents panel"))
 
         }
 
@@ -561,9 +574,28 @@ struct HiddenTitlebarSidebarControlsView: View {
             onNewTab: {
                 AppDelegate.shared?.performNewWorkspaceAction(debugSource: "titlebar.hiddenNewWorkspace")
             },
+            onToggleAgentsPanel: {
+                if let state = AppDelegate.shared?.fileExplorerState {
+                    toggleAgentsPanel(fileExplorerState: state)
+                }
+            },
             visibilityMode: .onHover
         )
         .frame(width: hostWidth, height: hostHeight, alignment: .leading)
+    }
+}
+
+/// Toggle the right sidebar to/from the agents mode.
+///
+/// - Hidden, or visible in a different mode → switch to agents mode and show.
+/// - Already visible in agents mode → hide.
+@MainActor
+func toggleAgentsPanel(fileExplorerState: FileExplorerState) {
+    if fileExplorerState.isVisible && fileExplorerState.mode == .agents {
+        fileExplorerState.setVisible(false)
+    } else {
+        fileExplorerState.mode = .agents
+        fileExplorerState.setVisible(true)
     }
 }
 
@@ -794,6 +826,11 @@ final class TitlebarControlsAccessoryViewController: NSTitlebarAccessoryViewCont
         let toggleSidebar = { _ = AppDelegate.shared?.sidebarState?.toggle() }
         let toggleNotifications: () -> Void = { _ = AppDelegate.shared?.toggleNotificationsPopover(animated: true) }
         let newTab = { _ = AppDelegate.shared?.performNewWorkspaceAction(debugSource: "titlebar.accessoryNewWorkspace") }
+        let toggleAgents: () -> Void = {
+            if let state = AppDelegate.shared?.fileExplorerState {
+                toggleAgentsPanel(fileExplorerState: state)
+            }
+        }
         hostingView = NonDraggableHostingView(
             rootView: TitlebarControlsView(
                 notificationStore: notificationStore,
@@ -801,6 +838,7 @@ final class TitlebarControlsAccessoryViewController: NSTitlebarAccessoryViewCont
                 onToggleSidebar: toggleSidebar,
                 onToggleNotifications: toggleNotifications,
                 onNewTab: newTab,
+                onToggleAgentsPanel: toggleAgents,
                 visibilityMode: .alwaysVisible
             )
         )

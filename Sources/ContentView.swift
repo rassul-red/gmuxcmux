@@ -2539,8 +2539,14 @@ struct ContentView: View {
             fileExplorerStore: fileExplorerStore,
             fileExplorerState: fileExplorerState,
             sessionIndexStore: sessionIndexStore,
+            tabManager: tabManager,
             onResumeSession: { entry in
                 resumeSession(entry: entry)
+            },
+            onFocusTerminal: { [tabManager] workspaceId, terminalId in
+                guard let workspace = tabManager.tabs.first(where: { $0.id == workspaceId }) else { return }
+                tabManager.selectWorkspace(workspace)
+                workspace.focusPanel(terminalId)
             }
         )
         .frame(width: rightSidebarWidth)
@@ -2605,6 +2611,9 @@ struct ContentView: View {
                     tabManager: tabManager,
                     debugSource: "titlebar.fullscreenNewWorkspace"
                 )
+            },
+            onToggleAgentsPanel: {
+                toggleAgentsPanel(fileExplorerState: fileExplorerState)
             },
             visibilityMode: .alwaysVisible
         )
