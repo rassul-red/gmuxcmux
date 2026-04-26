@@ -47,6 +47,8 @@ final class GhostDashboardController: ObservableObject {
         }
         manager.selectWorkspace(workspace)
         selectedProjectID = workspaceID
+        // Revive a Follow subscription that was persisted ON across launches.
+        TerminalDockMirror.shared.ensureMirroring(workspaceID: workspaceID)
         NotificationCenter.default.post(
             name: .ghostDashboardProjectDidSelect,
             object: workspaceID

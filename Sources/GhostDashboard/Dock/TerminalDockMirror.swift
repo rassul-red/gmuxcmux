@@ -47,6 +47,17 @@ final class TerminalDockMirror {
         #endif
     }
 
+    /// Idempotently re-establish the roster subscription for a workspace
+    /// whose Follow state is persisted as ON. Call sites: workspace
+    /// selection / dashboard window open. Without this, a relaunch leaves
+    /// `isFollowing` true while no `cancellable` is active, and roster
+    /// changes stop posting `.ghostDashboardDockNeedsRefresh`.
+    func ensureMirroring(workspaceID: UUID) {
+        guard isFollowing(workspaceID: workspaceID) else { return }
+        guard cancellables[workspaceID] == nil else { return }
+        startMirroring(workspaceID: workspaceID)
+    }
+
     private func startMirroring(workspaceID: UUID) {
         cancellables[workspaceID] = GhostDashboardController.shared.rosterPublisher
             .removeDuplicates()

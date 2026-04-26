@@ -13,7 +13,15 @@ extension TerminalController {
               let panel = workspace.focusedTerminalPanel else {
             return
         }
-        panel.sendInput(text)
-        panel.surface.requestBackgroundSurfaceStartIfNeeded()
+        if panel.surface.surface != nil {
+            panel.sendInput(text)
+        } else {
+            // Surface not yet realized — queue text via the pending-input
+            // path so a New Task prompt against a background workspace lands
+            // once the surface starts (mirroring sendInputToWorkspace).
+            let raw = text.replacingOccurrences(of: "\n", with: "\r")
+            panel.sendText(raw)
+            panel.surface.requestBackgroundSurfaceStartIfNeeded()
+        }
     }
 }
