@@ -296,8 +296,8 @@ struct AgentsCanvasView: View {
                 let pos = state?.position ?? chair
                 let arrived = state?.arrived ?? true
                 let facingLeft = state?.facingLeft ?? false
-                let isAtDesk = status.isAtDeskStatus && arrived
-                let isWalking = !status.isAtDeskStatus && !arrived
+                let isAtDesk = status.isAtDeskStatus
+                let isWalking = !arrived
                 return AgentsCanvasAgentSnapshot(
                     id: panelId,
                     workspaceId: workspace.id,

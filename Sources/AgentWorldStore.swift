@@ -31,8 +31,10 @@ final class AgentWorldStore: ObservableObject {
 
     @Published private(set) var statesByPanelId: [UUID: AgentWorldState] = [:]
 
-    /// Walking speed in points per second.
+    /// Wandering speed in points per second.
     private let walkSpeed: CGFloat = 30
+    /// Faster beeline speed used when an agent is returning to its desk.
+    private let deskWalkSpeed: CGFloat = 120
 
     /// How close (in points) before we consider the agent to have arrived.
     private let arrivalEpsilon: CGFloat = 1.5
@@ -103,7 +105,8 @@ final class AgentWorldStore: ObservableObject {
                     }
                 }
             } else {
-                let step = min(distance, walkSpeed * CGFloat(dt))
+                let speed = driver.status.isAtDeskStatus ? deskWalkSpeed : walkSpeed
+                let step = min(distance, speed * CGFloat(dt))
                 let nx = dx / distance
                 let ny = dy / distance
                 state.position = CGPoint(
