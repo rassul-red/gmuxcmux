@@ -1,0 +1,213 @@
+goal: |
+  cmux를 macOS GUI-first 앱으로 커스텀해서, 첨부 이미지(Ghost Projects)와 같은
+  대시보드를 메인 뷰로 만든다. 좌(프로젝트/에이전트 사이드바) / 중(2x2 isometric
+  픽셀-아트 룸 그리드, 최대 4개) / 우(선택 프로젝트 상세 + Quick Actions) /
+  하단(액션바) / 우측(접힘 가능한 도크 터미널) 구조로, 사용자가 GUI만으로
+  여러 Claude Code 세션을 병렬로 직관적으로 제어할 수 있게 한다.
+  Ghost Assets HTML(/Users/jh0927/Downloads/Ghost Assets _standalone_.html)을
+  WebView로 호스팅해 디자인/애니메이션을 재사용하고, Swift↔JS bridge로
+  Claude Code 트랜스크립트(`~/.claude/projects/*.jsonl`)의 tool_use 이벤트를
+  주입해 ghost 상태를 동적으로(1~5개) 갱신한다.
+
+constraints:
+  - "Platform: macOS native (Swift / SwiftUI / AppKit), Xcode 26.4, macOS Tahoe(26.x) 호환"
+  - "Render tech: WebView(WKWebView)에 Ghost Assets HTML 호스팅 + Swift↔JS bridge"
+  - "AI 통합 범위: Claude Code 단독(`~/.claude/projects/*.jsonl`). Codex/Gemini는 v2"
+  - "Project 모델: 기존 cmux Workspace 메커니즘 재사용 (별도 저장소 신설 X)"
+  - "Ghost: 프로젝트당 동적 1~5개. tool_use 스트림에 따라 시각적으로 변동"
+  - "Layout: 사이드바(좌) + 4-up 룸 그리드(중) + 상세/Quick Actions(우) + 액션바(하단) + 도크 터미널(우)"
+  - "Action bar v1: Open Project | Interrupt | New Task | Follow (Broadcast & Group Chat은 disabled+v2 라벨)"
+  - "Animation: Full vibe (호흡/떠다님/파티클/룸 발광) — 단, 대시보드 활성 시에만; 터미널 포커스 시 idle/일시정지"
+  - "Non-goal #1: 타이핑 지연 0ms 회귀 금지 (WindowTerminalHostView.hitTest, TabItemView .equatable, TerminalSurface.forceRefresh 등 핫패스 변경 금지)"
+  - "Non-goal #2: GUI 모드에서는 Browser/Markdown 패널 표시 안 함 (제거는 X, 숨김만)"
+  - "기존 탭/패널/단축키 UI는 유지하되 GUI가 메인 뷰; 기존 진입점은 다른 모드/메뉴로 접근 가능"
+  - "Build: ./scripts/reload.sh --tag dev_jung 으로 빌드 (CMUX_GHOSTTYKIT_TARGET=native, DEVELOPER_DIR=/Library/Developer/CommandLineTools, PATH에 ~/.local/cmux-bin & ~/.local/zig/zig-aarch64-macos-0.15.2)"
+  - "Bundle ID: com.cmuxterm.app.debug.dev.jung (태그 격리)"
+  - "Localization: 모든 user-facing 문자열은 String(localized:) + Resources/Localizable.xcstrings (영/일)"
+  - "단축키: KeyboardShortcutSettings + ~/.config/cmux/settings.json + 문서화"
+  - "테스트는 로컬에서 실행 안 함 (CI 또는 VM). Python socket 테스트는 태그된 소켓에서만"
+
+acceptance_criteria:
+  - "앱 시작 시 Ghost Projects 대시보드가 메인 뷰로 표시됨"
+  - "사이드바에 cmux Workspace 목록이 프로젝트로 보이고, 추가/선택 가능"
+  - "메인 영역에 최대 4개 프로젝트 룸이 2x2 isometric 그리드로 동시 렌더됨"
+  - "각 프로젝트의 Claude Code 세션이 tool_use 이벤트를 발생시키면 5초 이내에 ghost 수/상태가 시각적으로 변함"
+  - "Open Project: 룸 클릭 → 우측 상세 패널이 그 프로젝트로 갱신, 우측 도크 터미널이 해당 워크스페이스의 활성 세션을 어태치"
+  - "Interrupt: 선택된 프로젝트의 Claude Code 프로세스에 SIGINT(Ctrl-C 동등) 전달, ghost가 idle로 전환되는 것을 시각적으로 확인"
+  - "New Task: 입력 모달 → 선택된 Claude Code 세션 stdin에 프롬프트 주입 후 ghost 상태가 Coding 등으로 전환"
+  - "Follow: 토글 시 우측 도크 터미널이 선택 프로젝트의 출력을 auto-tail; 토글 해제 시 정지"
+  - "Broadcast / Group Chat 버튼은 disabled 상태로 보이며 'v2' 라벨/툴팁이 표시됨"
+  - "대시보드 활성 + 4개 프로젝트 룸이 모두 active일 때 60fps 유지(Full vibe 애니메이션)"
+  - "터미널 포커스 시 WebView가 idle/일시정지로 전환 → 키 입력 지연 회귀 없음(타이핑 지연 ≤ 1ms)"
+  - "빌드: ./scripts/reload.sh --tag dev_jung 가 macOS Tahoe(26.x) + zig 0.15.2 환경에서 BUILD SUCCEEDED 도달"
+  - "현재 사용 중인 Ghostty.app 세션과 충돌 없이 cmux DEV dev_jung.app 병렬 실행 가능"
+  - "AC 데모 시나리오: 프로젝트 4개 동시 → 각각 Claude Code 세션 → 상태 추적 → New Task 주입 → Interrupt 까지 1회 시연 통과"
+
+ontology:
+  name: GhostProjects
+  description: |
+    cmux GUI-first 대시보드 도메인 모델. Project = 기존 cmux Workspace.
+    Ghost = Claude Code 트랜스크립트의 활성 tool_use를 추상화한 시각 객체.
+    상태/액션바는 selected_project_id 기준으로 작동.
+  fields:
+    - name: projects
+      type: array
+      description: 최대 4개 동시 표시되는 Project 룸 목록
+    - name: project_id
+      type: string
+      description: cmux Workspace 식별자 (재사용)
+    - name: project_name
+      type: string
+      description: 사이드바와 룸 헤더에 표시되는 이름
+    - name: project_cwd
+      type: string
+      description: Workspace 작업 디렉토리 경로
+    - name: project_status
+      type: string
+      description: "OK | warning | running | idle (룸 상단 배지)"
+    - name: claude_session_paths
+      type: array
+      description: 해당 프로젝트와 연결된 ~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl 경로들
+    - name: ghosts
+      type: array
+      description: 해당 프로젝트의 활성 ghost 목록 (1~5)
+    - name: ghost_id
+      type: string
+      description: ghost 식별자 (예: specter-1)
+    - name: ghost_state
+      type: string
+      description: "Coding | Reviewing | Reading | Idle | Checking | Deploying | Monitoring | Testing"
+    - name: ghost_label
+      type: string
+      description: 현재 tool_use 이름 또는 컨텍스트 라벨 (예: "PR #142", "grep")
+    - name: selected_project_id
+      type: string
+      description: 우측 상세 패널 + 액션바 대상이 되는 현재 선택 프로젝트
+    - name: dashboard_active
+      type: boolean
+      description: 대시보드가 포커스된 상태(애니메이션/CPU 게이팅 트리거)
+    - name: terminal_dock_collapsed
+      type: boolean
+      description: 우측 도크 터미널 접힘 여부
+    - name: action_bar_state
+      type: object
+      description: "Open Project / Interrupt / New Task / Follow 버튼 활성화 상태와 Broadcast/Group Chat 그레이 표시"
+
+evaluation_principles:
+  - name: typing_latency_zero
+    description: 기존 0ms 타이핑 지연이 회귀하지 않는다 (cmux의 가장 강한 불변)
+    weight: 1.0
+  - name: visual_fidelity_to_ghost_assets
+    description: Ghost Assets HTML의 디자인/애니메이션 vibe(호흡/파티클/발광)를 그대로 보존
+    weight: 0.85
+  - name: intuitive_interaction
+    description: 마우스 클릭만으로 4개 프로젝트를 동시에 직관적으로 제어 가능
+    weight: 0.9
+  - name: claude_transcript_accuracy
+    description: Claude Code tool_use 이벤트가 ghost 상태에 5초 이내 반영
+    weight: 0.8
+  - name: minimal_surgery_to_existing
+    description: 기존 cmux Workspace/터미널/단축키 코드는 최소한만 건드림
+    weight: 0.85
+  - name: v1_scope_discipline
+    description: v1 액션 4개에 집중 (Broadcast/Group Chat은 disabled+v2 라벨로만 노출)
+    weight: 0.7
+  - name: build_isolation
+    description: 태그된 빌드(--tag dev_jung)로 production cmux/Ghostty와 격리됨
+    weight: 0.6
+
+exit_conditions:
+  - name: ac_demo_passes
+    description: AC 데모 시나리오 1회 시연 가능
+    criteria: "4개 프로젝트 동시 + Claude Code 세션 + 상태 추적 + New Task 주입 + Interrupt 동작이 한 번의 시연으로 모두 검증됨"
+  - name: typing_regression_clean
+    description: 타이핑 지연 회귀 테스트 통과
+    criteria: "터미널 포커스 시 키 입력 처리 경로(WindowTerminalHostView/TabItemView/TerminalSurface)에 차이 없음, ≤ 1ms 응답"
+  - name: build_succeeds_on_dev_jung
+    description: Tahoe + zig 0.15.2 환경에서 dev_jung 빌드 성공
+    criteria: "./scripts/reload.sh --tag dev_jung 출력에 'BUILD SUCCEEDED' 포함, 산출 .app 실행 가능"
+  - name: v2_actions_grayed
+    description: Broadcast/Group Chat이 disabled+v2 라벨로 보임
+    criteria: "버튼이 disabled 스타일이고 hover 시 'v2' 툴팁 노출"
+  - name: parallel_ghostty_safe
+    description: Ghostty.app과 충돌 없이 병렬 실행
+    criteria: "사용자의 기존 Ghostty 세션은 영향 받지 않으며, cmux DEV dev_jung.app이 별도 Dock 아이콘으로 동시 실행됨"
+
+project_type: brownfield
+
+context_references:
+  - path: /Users/jh0927/cmux
+    role: primary
+    summary: cmux 본 repo (현재 dev_jung 브랜치 체크아웃됨)
+  - path: /Users/jh0927/cmux/Sources/Workspace.swift
+    role: primary
+    summary: 기존 Workspace 데이터 모델 — Project로 재사용
+  - path: /Users/jh0927/cmux/Sources/cmuxApp.swift
+    role: reference
+    summary: 앱 진입점, 기본 메인 뷰를 대시보드로 전환할 위치
+  - path: /Users/jh0927/cmux/Sources/AppDelegate.swift
+    role: reference
+    summary: 윈도우 라이프사이클 / Debug 메뉴 / 단축키 진입
+  - path: /Users/jh0927/cmux/Sources/ContentView.swift
+    role: reference
+    summary: 현재 메인 컨텐츠 (탭/패널/터미널) — 새 GUI 모드와 공존
+  - path: /Users/jh0927/cmux/Sources/Panels/Panel.swift
+    role: reference
+    summary: 기존 패널 시스템 — 대시보드도 패널로 통합 가능
+  - path: /Users/jh0927/cmux/Sources/Panels/CmuxWebView.swift
+    role: reference
+    summary: 기존 WebView 통합 — Ghost Assets 호스팅 패턴 재사용
+  - path: /Users/jh0927/cmux/Sources/TabManager.swift
+    role: reference
+    summary: 워크스페이스/탭 관리 (선택/포커스 모델 참고)
+  - path: /Users/jh0927/cmux/Sources/KeyboardShortcutSettings.swift
+    role: reference
+    summary: 단축키 정책 — 새 단축키는 모두 여기 등록 필요
+  - path: /Users/jh0927/Downloads/Ghost Assets _standalone_.html
+    role: primary
+    summary: 대시보드 디자인/애니메이션 자산 (WebView에 그대로 호스팅, 2.4MB 자체 압축 번들)
+  - path: /Users/jh0927/cmux/CLAUDE.md
+    role: primary
+    summary: 빌드/태깅/타이핑-지연 정책 / 테스트 정책 / 단축키 정책
+  - path: /Users/jh0927/cmux/scripts/reload.sh
+    role: primary
+    summary: 빌드 진입점 (--tag dev_jung으로 격리 빌드)
+  - path: /Users/jh0927/cmux/scripts/ensure-ghosttykit.sh
+    role: reference
+    summary: GhosttyKit 빌드 (CMUX_GHOSTTYKIT_TARGET=native 옵션 추가됨)
+  - path: ~/.claude/projects
+    role: primary
+    summary: Claude Code 트랜스크립트 디렉토리 — ghost 상태의 데이터 소스 (jsonl, tool_use events)
+  - path: /Users/jh0927/cmux/Resources/Localizable.xcstrings
+    role: reference
+    summary: 모든 새 user-facing 문자열은 여기 등록 (English + Japanese)
+
+existing_patterns:
+  - "태그된 빌드 (./scripts/reload.sh --tag <slug>) — 병렬 격리 인스턴스"
+  - "태그별 Bundle ID (com.cmuxterm.app.debug.<tag>) — production cmux와 격리"
+  - "WebView 호스팅: Sources/Panels/CmuxWebView.swift 패턴"
+  - "로컬라이즈: String(localized: 'key', defaultValue: '...') + Resources/Localizable.xcstrings"
+  - "DEBUG-only 기능은 #if DEBUG / #endif"
+  - "Debug Windows 메뉴 (cmuxApp.swift) — NSWindowController 싱글턴 + SwiftUI"
+  - "고빈도 socket 명령은 off-main 처리 (DispatchQueue.main.async 최소화)"
+  - "Ghostty submodule 변경은 항상 ghostty fork에 push 후 부모 repo submodule pointer 갱신"
+  - "regression test: 2-commit (failing test → fix) 구조"
+  - "테스트 정책: source text/AST를 검증하는 테스트 금지, 런타임 동작만 검증"
+
+existing_dependencies:
+  - "GhosttyKit.xcframework (native target, 빌드 산출물)"
+  - "WebKit / WKWebView (대시보드 렌더링)"
+  - "SwiftUI + AppKit hybrid"
+  - "vendor/bonsplit (split/tab UI)"
+  - "Combine (상태 관찰)"
+  - "Codable / Foundation (transcript JSONL 파싱)"
+  - "DispatchSource (jsonl 파일 변경 감지)"
+
+metadata:
+  version: "0.1.0"
+  generated_at: "2026-04-26"
+  ambiguity_score: 0.15
+  interview_id: "ghost-projects-dashboard-2026-04-26"
+  generation_mode: "Path B (no MCP) — seed-architect"
+  branch: dev_jung
+  base_commit: 3f1ce4b6
