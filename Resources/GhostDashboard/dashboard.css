@@ -1,4 +1,4 @@
-/* cmux Ghost Projects dashboard — 2x2 grid styles. */
+/* cmux Ghost Projects dashboard — isometric office scene styles. */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,102 +23,126 @@ html, body {
   box-sizing: border-box;
 }
 
+/* Each tile is an isometric room with the office background image. */
 .ghost-room {
+  position: relative;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(160deg, #1a1822 0%, #110f17 100%);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
+  background: #110f17 url('sprites/bg/AgentOfficeBackground.png') center/cover no-repeat;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  color: #6B8AFD;
-  transition: border-color 200ms ease;
+  transition: border-color 200ms ease, opacity 200ms ease;
 }
 
 .ghost-room.placeholder {
   opacity: 0.45;
   border-style: dashed;
+  filter: grayscale(0.7);
 }
 
-.ghost-glyph {
-  width: 80px;
-  height: 80px;
-  flex: 0 0 auto;
-  margin-top: 8px;
-  color: currentColor;
+.scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.ghost-glyph svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  fill: currentColor;
+/* Layered z-index ladder: bg(0) < prop(1) < desk(2) < worker(3) < header(10) */
+.scene .prop   { position: absolute; z-index: 1; pointer-events: none; transform-origin: center; image-rendering: -webkit-optimize-contrast; }
+.scene .desk   { position: absolute; z-index: 2; pointer-events: none; transform-origin: center; image-rendering: -webkit-optimize-contrast; }
+.scene .worker {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: center;
+  image-rendering: -webkit-optimize-contrast;
+  transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
+  width: 22%;
+  height: auto;
+  transform: translate(-50%, -50%);
 }
 
-/* State color tokens. The base color is what the SVG glyph picks up via
-   `currentColor`; the status-pill picks the same hue. */
-.ghost-room.state-idle    { color: #6B8AFD; }
-.ghost-room.state-coding  { color: #5BD68E; }
-.ghost-room.state-warning { color: #F5685A; }
-.ghost-room.state-walking { color: #F1C152; }
-
-/* Coding pulse: subtle scale; halts when lifecycle is inactive. */
-@keyframes ghost-pulse {
-  0%, 100% { transform: scale(1.0); }
-  50%      { transform: scale(1.04); }
+/* Standing worker bobs slightly while wandering. */
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-3px); }
 }
-@keyframes ghost-blink {
-  0%, 100% { opacity: 1.0; }
-  50%      { opacity: 0.35; }
+.scene .worker.bobbing {
+  animation: bob 0.6s ease-in-out infinite alternate;
 }
 
-.ghost-room.state-coding .ghost-glyph  { animation: ghost-pulse 1.6s ease-in-out infinite; }
-.ghost-room.state-warning .ghost-glyph { animation: ghost-blink 0.9s ease-in-out infinite; }
+/* Attention pose: red drop-shadow halo + pulse. */
+@keyframes pulse-attention {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(245, 104, 90, 0.65)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(245, 104, 90, 1.0)); }
+}
+.scene .worker.attention {
+  animation: pulse-attention 0.9s ease-in-out infinite;
+}
 
-body.lifecycle-inactive .ghost-glyph { animation: none !important; }
+/* Seated workers: no bob, no glow. */
+.scene .worker.seated {
+  animation: none;
+}
+
+/* Room overlay: project name + status pill at top. */
+.room-header {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
 
 .room-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #e6e6f0;
-  margin-top: 12px;
-  text-align: center;
-  width: 100%;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.room-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .status-pill {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
   border-radius: 999px;
-  background: currentColor;
+  background: #6B8AFD;
   color: #0a090e;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: lowercase;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  flex: 0 0 auto;
 }
 
-.last-activity {
-  font-size: 11px;
-  color: rgba(230, 230, 240, 0.45);
-  margin-top: 6px;
-}
+/* State color tokens for the status pill. */
+.ghost-room.state-idle    .status-pill { background: #6B8AFD; }
+.ghost-room.state-coding  .status-pill { background: #5BD68E; }
+.ghost-room.state-warning .status-pill { background: #F5685A; }
+.ghost-room.state-walking .status-pill { background: #F1C152; }
 
+.ghost-room.placeholder .status-pill {
+  background: rgba(230, 230, 240, 0.3);
+  color: rgba(230, 230, 240, 0.75);
+}
 .ghost-room.placeholder .room-name {
   color: rgba(230, 230, 240, 0.55);
 }
-.ghost-room.placeholder .status-pill { display: none; }
-.ghost-room.placeholder .last-activity { display: none; }
+
+/* Lifecycle gate: freeze every animation/transition inside the scene. */
+body.lifecycle-inactive .scene *,
+body.lifecycle-inactive .scene {
+  animation-play-state: paused !important;
+  transition: none !important;
+}

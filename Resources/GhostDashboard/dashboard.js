@@ -1,70 +1,343 @@
-// cmux Ghost Projects dashboard renderer.
+// cmux Ghost Projects dashboard — isometric office scene renderer.
 //
-// Owns the 2x2 tile DOM and consumes envelopes from `bridge.js`:
-//   - ghost.snapshot.v1   { projects: [GhostProjectState] }   — full reset
-//   - ghost.delta.v1      { projectID, ghosts?, projectStatus? } — single project
-//   - ghost.lifecycle.v1  { active }                          — animation gate
+// Consumes envelopes from `bridge.js`:
+//   - ghost.snapshot.v1   payload = { projects: [GhostProjectState] }   — full reset
+//   - ghost.delta.v1      payload = { projectID, ghosts?, projectStatus? } — single project
+//   - ghost.lifecycle.v1  payload = { active }                          — animation gate
 //
-// The renderer is a plain DOM script (no bundler) to mirror the existing
-// bridge.js style. It keeps a simple `state.projects[]` array sorted by
-// projectID so the 4 tile slots are stable across snapshots.
+// For each tile we maintain a small scene graph:
+//   tile -> { sceneEl, projectID, workers: Map<ghostID, Worker> }
+//   Worker = { ghostID, role, slotIdx, mode, pose, pos, dom, lastWanderTick, walkTimer }
+//
+// State → mode mapping collapses 8 GhostState raw values into:
+//   wander  — standing, free-roaming
+//   seated  — at the worker's assigned desk, "Working" pose
+//   attention — standing, red glow, "Attention" pose
+
 (function () {
   "use strict";
 
-  var SNAPSHOT_EVENT = "ghost.snapshot.v1";
-  var DELTA_EVENT = "ghost.delta.v1";
+  // ---------- constants ----------------------------------------------------
+
+  var SNAPSHOT_EVENT  = "ghost.snapshot.v1";
+  var DELTA_EVENT     = "ghost.delta.v1";
   var LIFECYCLE_EVENT = "ghost.lifecycle.v1";
+
   var TILE_COUNT = 4;
+  var ROLES = ["Builder", "Debugger", "Orchestrator", "Reviewer"];
 
-  // Lower-cased GhostState.rawValue → CSS class suffix.
-  // GhostState today is one of: Coding, Reviewing, Reading, Idle,
-  // Checking, Deploying, Monitoring, Testing. We collapse them into the four
-  // visual buckets the CSS knows about: idle, coding, warning, walking.
+  // 4 fixed desk slots per tile, in % of tile area (isometric layout tuned
+  // to AgentOfficeBackground.png — back row up, front row down).
+  var DESK_SLOTS = [
+    { x: 28, y: 42 }, // back-left
+    { x: 68, y: 42 }, // back-right
+    { x: 24, y: 70 }, // front-left
+    { x: 72, y: 70 }, // front-right
+  ];
+
+  // Free-roam bounding box (% within the tile).
+  var ROAM = { xMin: 18, xMax: 78, yMin: 50, yMax: 82 };
+
+  // GhostState rawValue → tile-mode bucket. Mirrors the lower-cased keys used
+  // in the previous dashboard.js so the input contract is preserved.
+  var STATE_TO_MODE = {
+    idle:       "wander",
+    walking:    "wander",
+    coding:     "seated",
+    reading:    "seated",
+    reviewing:  "seated",
+    checking:   "seated",
+    deploying:  "seated",
+    monitoring: "seated",
+    testing:    "seated",
+    warning:    "attention",
+  };
+
+  // GhostState rawValue → tile color bucket (drives the status-pill color).
   var STATE_BUCKETS = {
-    idle: "idle",
-    coding: "coding",
-    reviewing: "coding",
-    reading: "coding",
-    checking: "coding",
-    deploying: "coding",
+    idle:       "idle",
+    walking:    "walking",
+    coding:     "coding",
+    reading:    "coding",
+    reviewing:  "coding",
+    checking:   "coding",
+    deploying:  "coding",
     monitoring: "coding",
-    testing: "coding",
-    warning: "warning",
-    walking: "walking",
+    testing:    "coding",
+    warning:    "warning",
   };
 
-  // Inline ghost glyph: chubby Pac-Man-style silhouette with a wavy hem and
-  // two eyes. Uses currentColor so the surrounding `.ghost-room.state-*`
-  // class drives the fill. Eyes are white circles.
-  var GHOST_SVG = [
-    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" ',
-    'aria-hidden="true" focusable="false">',
-      '<path d="',
-        'M 12 50 ',
-        'C 12 24, 30 12, 50 12 ',
-        'C 70 12, 88 24, 88 50 ',
-        'L 88 86 ',
-        'L 78 76 ',
-        'L 68 86 ',
-        'L 58 76 ',
-        'L 50 86 ',
-        'L 42 76 ',
-        'L 32 86 ',
-        'L 22 76 ',
-        'L 12 86 ',
-        'Z" fill="currentColor"/>',
-      '<circle cx="38" cy="46" r="7" fill="#ffffff"/>',
-      '<circle cx="62" cy="46" r="7" fill="#ffffff"/>',
-      '<circle cx="38" cy="48" r="3" fill="#0a090e"/>',
-      '<circle cx="62" cy="48" r="3" fill="#0a090e"/>',
-    "</svg>",
-  ].join("");
+  // Static prop layout — same for all 4 tiles. Coordinates in % of tile.
+  // [name, leftPct, topPct, scale].
+  var PROP_LAYOUT = [
+    ["ServerRack",    10, 28, 0.30],
+    ["Bookshelf",     90, 28, 0.34],
+    ["TaskBoard",     50, 16, 0.26],
+    ["FloorLamp",      8, 64, 0.26],
+    ["PottedPlant",   92, 76, 0.20],
+    ["FloorRug",      50, 88, 0.55],
+    ["StorageCabinet", 92, 50, 0.24],
+    ["Router",         8, 86, 0.18],
+  ];
 
-  var state = {
-    projects: [], // sorted by projectID, capped to TILE_COUNT for render
-  };
+  // ---------- helpers ------------------------------------------------------
 
-  var tiles = []; // DOM nodes, length = TILE_COUNT, set by buildGrid()
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (typeof text === "string") e.textContent = text;
+    return e;
+  }
+
+  function roleFor(ghostID) {
+    if (typeof ghostID !== "string" || !ghostID.length) return ROLES[0];
+    var h = 0;
+    for (var i = 0; i < ghostID.length; i += 1) {
+      h = ((h * 31) + ghostID.charCodeAt(i)) | 0;
+    }
+    return ROLES[Math.abs(h) % ROLES.length];
+  }
+
+  function modeFor(rawState) {
+    if (typeof rawState !== "string") return "wander";
+    return STATE_TO_MODE[rawState.toLowerCase()] || "wander";
+  }
+
+  function bucketFor(rawState) {
+    if (typeof rawState !== "string") return "idle";
+    return STATE_BUCKETS[rawState.toLowerCase()] || "idle";
+  }
+
+  function workerSrc(role, pose, seated) {
+    if (seated) {
+      return "sprites/seated/AgentWorkerSeated" + role + pose + ".png";
+    }
+    return "sprites/workers/AgentWorker" + role + pose + ".png";
+  }
+
+  // Project-level rollup: pick the most "active" ghost so the pill shows it.
+  function projectBucket(project) {
+    var ghosts = (project && project.ghosts) || [];
+    if (!ghosts.length) return { bucket: "idle", raw: "Idle" };
+    var fallback = { bucket: "idle", raw: ghosts[0].state || "Idle" };
+    for (var i = 0; i < ghosts.length; i += 1) {
+      var b = bucketFor(ghosts[i].state);
+      if (b === "warning") return { bucket: "warning", raw: ghosts[i].state };
+      if (b !== "idle") fallback = { bucket: b, raw: ghosts[i].state };
+    }
+    return fallback;
+  }
+
+  // ---------- tile scaffold ------------------------------------------------
+
+  function buildTile(idx) {
+    var room = el("div", "ghost-room placeholder state-idle");
+    room.setAttribute("data-slot", String(idx));
+    var scene = el("div", "scene");
+
+    // Static props.
+    for (var i = 0; i < PROP_LAYOUT.length; i += 1) {
+      var entry = PROP_LAYOUT[i];
+      var p = el("img", "prop");
+      p.alt = "";
+      p.src = "sprites/props/OfficeProp" + entry[0] + ".png";
+      p.style.left = entry[1] + "%";
+      p.style.top = entry[2] + "%";
+      p.style.width = (entry[3] * 60) + "%"; // scale is a multiplier
+      p.style.transform = "translate(-50%, -50%)";
+      scene.appendChild(p);
+    }
+
+    // 4 desks at fixed slots, role-keyed Idle PNGs.
+    for (var j = 0; j < DESK_SLOTS.length; j += 1) {
+      var slot = DESK_SLOTS[j];
+      var role = ROLES[j];
+      var d = el("img", "desk");
+      d.alt = "";
+      d.src = "sprites/desks/AgentDesk" + role + "Idle.png";
+      d.style.left = slot.x + "%";
+      d.style.top = slot.y + "%";
+      d.style.width = "26%";
+      d.style.transform = "translate(-50%, -50%)";
+      d.dataset.slot = String(j);
+      scene.appendChild(d);
+    }
+
+    // Header overlay (project name + status pill).
+    var header = el("div", "room-header");
+    var name = el("span", "room-name", "—");
+    var pill = el("span", "status-pill", "no project");
+    header.appendChild(name);
+    header.appendChild(pill);
+    scene.appendChild(header);
+
+    room.appendChild(scene);
+
+    return {
+      idx: idx,
+      root: room,
+      sceneEl: scene,
+      nameEl: name,
+      pillEl: pill,
+      projectID: null,
+      workers: new Map(),
+    };
+  }
+
+  // ---------- worker render ------------------------------------------------
+
+  function spawnWorker(tile, ghostID, slotIdx) {
+    var role = roleFor(ghostID);
+    var dom = el("img", "worker bobbing");
+    dom.alt = "";
+    dom.src = workerSrc(role, "Idle", false);
+    var startX = ROAM.xMin + Math.random() * (ROAM.xMax - ROAM.xMin);
+    var startY = ROAM.yMin + Math.random() * (ROAM.yMax - ROAM.yMin);
+    dom.style.left = startX + "%";
+    dom.style.top = startY + "%";
+    dom.dataset.role = role;
+    tile.sceneEl.appendChild(dom);
+    return {
+      ghostID: ghostID,
+      role: role,
+      slotIdx: slotIdx,
+      mode: "wander",
+      pose: "Idle",
+      pos: { x: startX, y: startY },
+      dom: dom,
+      lastWanderTick: 0,
+      walkTimer: 0,
+    };
+  }
+
+  function applyWorkerVisual(worker) {
+    var dom = worker.dom;
+    var seated = (worker.mode === "seated");
+    dom.src = workerSrc(worker.role, worker.pose, seated);
+    setClass(dom, "bobbing", worker.mode === "wander");
+    setClass(dom, "attention", worker.mode === "attention");
+    setClass(dom, "seated", seated);
+  }
+
+  function setClass(dom, cls, on) {
+    if (on) dom.classList.add(cls);
+    else dom.classList.remove(cls);
+  }
+
+  function moveWorker(worker, x, y) {
+    worker.pos.x = x;
+    worker.pos.y = y;
+    worker.dom.style.left = x + "%";
+    worker.dom.style.top = y + "%";
+  }
+
+  function deskPos(slotIdx) {
+    var s = DESK_SLOTS[slotIdx % DESK_SLOTS.length];
+    // Sit slightly in front of the desk so the seated sprite reads on top.
+    return { x: s.x, y: Math.min(92, s.y + 10) };
+  }
+
+  function transitionToMode(worker, newMode, newPose) {
+    var prevMode = worker.mode;
+    worker.mode = newMode;
+    worker.pose = newPose;
+
+    // Cancel any in-flight walk timer; we're committing to a new state.
+    if (worker.walkTimer) {
+      clearTimeout(worker.walkTimer);
+      worker.walkTimer = 0;
+    }
+
+    if (newMode === "seated") {
+      // Walk to desk first, then swap to the seated sprite.
+      var dp = deskPos(worker.slotIdx);
+      // Stay standing while traveling.
+      worker.dom.src = workerSrc(worker.role, "Idle", false);
+      setClass(worker.dom, "bobbing", true);
+      setClass(worker.dom, "attention", false);
+      setClass(worker.dom, "seated", false);
+      moveWorker(worker, dp.x, dp.y);
+      worker.walkTimer = setTimeout(function () {
+        worker.walkTimer = 0;
+        applyWorkerVisual(worker);
+      }, 2400);
+    } else if (prevMode === "seated") {
+      // Leave desk: standing pose, then enter wander/attention behavior.
+      applyWorkerVisual(worker);
+      // Pick a random wander target so it visibly walks away.
+      if (newMode === "wander") {
+        var x = ROAM.xMin + Math.random() * (ROAM.xMax - ROAM.xMin);
+        var y = ROAM.yMin + Math.random() * (ROAM.yMax - ROAM.yMin);
+        moveWorker(worker, x, y);
+      }
+    } else {
+      applyWorkerVisual(worker);
+    }
+  }
+
+  // ---------- per-tile sync ------------------------------------------------
+
+  function syncTile(tile, project) {
+    if (!project) {
+      tile.projectID = null;
+      tile.root.className = "ghost-room placeholder state-idle";
+      tile.nameEl.textContent = "—";
+      tile.pillEl.textContent = "no project";
+      tile.workers.forEach(function (w) {
+        if (w.walkTimer) clearTimeout(w.walkTimer);
+        w.dom.remove();
+      });
+      tile.workers.clear();
+      return;
+    }
+
+    tile.projectID = project.projectID;
+    var info = projectBucket(project);
+    tile.root.className = "ghost-room state-" + info.bucket;
+    tile.nameEl.textContent = project.projectName || project.projectID || "(unnamed)";
+    tile.pillEl.textContent = (info.raw || "idle").toLowerCase();
+
+    var ghosts = (project.ghosts || []).slice(0, DESK_SLOTS.length);
+
+    // Remove workers no longer present.
+    var liveIds = new Set();
+    for (var k = 0; k < ghosts.length; k += 1) liveIds.add(ghosts[k].ghostID);
+    var stale = [];
+    tile.workers.forEach(function (w, id) { if (!liveIds.has(id)) stale.push(id); });
+    stale.forEach(function (id) {
+      var w = tile.workers.get(id);
+      if (w) {
+        if (w.walkTimer) clearTimeout(w.walkTimer);
+        w.dom.remove();
+      }
+      tile.workers["delete"](id);
+    });
+
+    // Add or update.
+    for (var i = 0; i < ghosts.length; i += 1) {
+      var g = ghosts[i];
+      var worker = tile.workers.get(g.ghostID);
+      if (!worker) {
+        worker = spawnWorker(tile, g.ghostID, i);
+        tile.workers.set(g.ghostID, worker);
+      }
+      worker.slotIdx = i;
+      var newMode = modeFor(g.state);
+      var newPose;
+      if (newMode === "seated") newPose = "Working";
+      else if (newMode === "attention") newPose = "Attention";
+      else newPose = "Idle";
+
+      if (worker.mode !== newMode || worker.pose !== newPose) {
+        transitionToMode(worker, newMode, newPose);
+      }
+    }
+  }
+
+  // ---------- top-level state ---------------------------------------------
+
+  var tiles = [];
+  var projects = []; // sorted by projectID, capped to TILE_COUNT for render.
 
   function buildGrid() {
     var grid = document.getElementById("ghost-grid");
@@ -72,107 +345,28 @@
     grid.innerHTML = "";
     tiles = [];
     for (var i = 0; i < TILE_COUNT; i += 1) {
-      var room = document.createElement("div");
-      room.className = "ghost-room placeholder state-idle";
-      room.setAttribute("data-slot", String(i));
-
-      var glyph = document.createElement("div");
-      glyph.className = "ghost-glyph";
-      glyph.innerHTML = GHOST_SVG;
-      room.appendChild(glyph);
-
-      var name = document.createElement("div");
-      name.className = "room-name";
-      name.textContent = "No project";
-      room.appendChild(name);
-
-      var meta = document.createElement("div");
-      meta.className = "room-meta";
-      var pill = document.createElement("span");
-      pill.className = "status-pill";
-      pill.textContent = "idle";
-      meta.appendChild(pill);
-      room.appendChild(meta);
-
-      var activity = document.createElement("div");
-      activity.className = "last-activity";
-      activity.textContent = "";
-      room.appendChild(activity);
-
-      grid.appendChild(room);
-      tiles.push({
-        root: room,
-        name: name,
-        pill: pill,
-        activity: activity,
-      });
+      var tile = buildTile(i);
+      grid.appendChild(tile.root);
+      tiles.push(tile);
     }
-  }
-
-  function bucketFor(stateValue) {
-    if (typeof stateValue !== "string") return "idle";
-    var key = stateValue.toLowerCase();
-    return STATE_BUCKETS[key] || "idle";
-  }
-
-  // Pick a representative state for the tile from a project's ghost roster.
-  // We surface the most "active" ghost (anything non-idle wins) so the tile
-  // pulses while any session in the project is alive.
-  function projectTileState(project) {
-    var ghosts = (project && project.ghosts) || [];
-    if (!ghosts.length) return { bucket: "idle", raw: "Idle", lastActivityAt: null };
-    for (var i = 0; i < ghosts.length; i += 1) {
-      var g = ghosts[i];
-      var bucket = bucketFor(g && g.state);
-      if (bucket !== "idle") {
-        return { bucket: bucket, raw: g.state, lastActivityAt: g.lastActivityAt || null };
-      }
-    }
-    var first = ghosts[0];
-    return { bucket: "idle", raw: first.state || "Idle", lastActivityAt: first.lastActivityAt || null };
-  }
-
-  function formatActivity(ts) {
-    if (!ts) return "";
-    var n = (typeof ts === "number") ? ts : Number(ts);
-    if (!isFinite(n) || n <= 0) return "";
-    try {
-      return new Date(n).toLocaleTimeString();
-    } catch (_) {
-      return "";
-    }
-  }
-
-  function applyTile(tile, project) {
-    if (!tile) return;
-    if (!project) {
-      tile.root.className = "ghost-room placeholder state-idle";
-      tile.name.textContent = "No project";
-      tile.pill.textContent = "idle";
-      tile.activity.textContent = "";
-      return;
-    }
-    var info = projectTileState(project);
-    tile.root.className = "ghost-room state-" + info.bucket;
-    tile.name.textContent = project.projectName || project.projectID || "(unnamed)";
-    tile.pill.textContent = (info.raw || "idle").toLowerCase();
-    tile.activity.textContent = formatActivity(info.lastActivityAt);
   }
 
   function render() {
-    var sorted = state.projects.slice().sort(function (a, b) {
+    var sorted = projects.slice().sort(function (a, b) {
       var ai = (a && a.projectID) || "";
       var bi = (b && b.projectID) || "";
       return ai < bi ? -1 : ai > bi ? 1 : 0;
     });
     for (var i = 0; i < TILE_COUNT; i += 1) {
-      applyTile(tiles[i], sorted[i]);
+      syncTile(tiles[i], sorted[i] || null);
     }
   }
 
+  // ---------- event handlers ----------------------------------------------
+
   function applySnapshot(payload) {
-    var projects = (payload && payload.projects) || [];
-    state.projects = projects.slice();
+    var nextProjects = (payload && payload.projects) || [];
+    projects = nextProjects.slice();
     render();
   }
 
@@ -180,22 +374,20 @@
     if (!payload || !payload.projectID) return;
     var pid = payload.projectID;
     var existing = null;
-    for (var i = 0; i < state.projects.length; i += 1) {
-      if (state.projects[i].projectID === pid) {
-        existing = state.projects[i];
+    for (var i = 0; i < projects.length; i += 1) {
+      if (projects[i].projectID === pid) {
+        existing = projects[i];
         break;
       }
     }
     // Empty ghosts array signals "project removed" per #3 contract.
     if (Array.isArray(payload.ghosts) && payload.ghosts.length === 0) {
-      state.projects = state.projects.filter(function (p) { return p.projectID !== pid; });
+      projects = projects.filter(function (p) { return p.projectID !== pid; });
       render();
       return;
     }
     if (!existing) {
-      // Best-effort upsert: synthesize a project record. The bridge usually
-      // pushes a snapshot first so this branch is mostly defensive.
-      state.projects.push({
+      projects.push({
         projectID: pid,
         projectName: pid,
         projectCwd: "",
@@ -218,17 +410,46 @@
     document.body.classList.toggle("lifecycle-inactive", !active);
   }
 
+  // ---------- free-roam loop ----------------------------------------------
+
+  var lastTick = 0;
+  function loop(now) {
+    if (!document.body.classList.contains("lifecycle-inactive")) {
+      if (now - lastTick > 800) {
+        lastTick = now;
+        for (var i = 0; i < tiles.length; i += 1) {
+          var t = tiles[i];
+          t.workers.forEach(function (w) {
+            if (w.mode !== "wander") return;
+            if (w.walkTimer) return;
+            var due = 6000 + Math.random() * 6000;
+            if (now - w.lastWanderTick > due) {
+              w.lastWanderTick = now;
+              var x = ROAM.xMin + Math.random() * (ROAM.xMax - ROAM.xMin);
+              var y = ROAM.yMin + Math.random() * (ROAM.yMax - ROAM.yMin);
+              moveWorker(w, x, y);
+            }
+          });
+        }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- boot ---------------------------------------------------------
+
   function init() {
     buildGrid();
     render();
-    window.addEventListener(SNAPSHOT_EVENT, function (ev) { applySnapshot(ev.detail); });
-    window.addEventListener(DELTA_EVENT,    function (ev) { applyDelta(ev.detail); });
+
+    window.addEventListener(SNAPSHOT_EVENT,  function (ev) { applySnapshot(ev.detail); });
+    window.addEventListener(DELTA_EVENT,     function (ev) { applyDelta(ev.detail); });
     window.addEventListener(LIFECYCLE_EVENT, function (ev) { applyLifecycle(ev.detail); });
 
-    // The WebViewHost's lifecycle shim posts to window.__ghostLifecycle
-    // (the #5 RAF gate). Wrap it so the dashboard's CSS animations also
-    // suspend/resume in lockstep with the gate, without changing the gate's
-    // own RAF semantics.
+    // The WebViewHost's lifecycle shim posts to window.__ghostLifecycle (the
+    // #5 RAF gate). Wrap it so the dashboard's CSS animations also suspend
+    // /resume in lockstep with the gate, without changing the gate's own
+    // RAF semantics.
     var prior = (typeof window.__ghostLifecycle === "function")
       ? window.__ghostLifecycle
       : null;
@@ -238,6 +459,8 @@
         try { prior(msg); } catch (_) { /* noop */ }
       }
     };
+
+    requestAnimationFrame(loop);
   }
 
   if (document.readyState === "loading") {
