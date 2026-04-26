@@ -72,11 +72,11 @@ html, body {
 .scene .worker {
   position: absolute;
   z-index: 3;
-  /* Re-enable pointer events on workers so hover tooltips fire — the
-     `.scene` container itself stays pointer-transparent so background
+  /* Re-enable pointer events on workers so hover tooltips and clicks fire
+     — the `.scene` container itself stays pointer-transparent so background
      clicks (project selection) still pass through. */
   pointer-events: auto;
-  cursor: default;
+  cursor: pointer;
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
   transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
@@ -180,4 +180,60 @@ body.lifecycle-inactive .scene {
   margin-top: 3px;
   color: #8e8ea0;
   font-size: 10px;
+}
+
+.ghost-tooltip-attention {
+  margin-top: 4px;
+  color: #ffb84a;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* "?" speech bubble badge — positioned above the worker, anchored to the
+   same left/top transform so it follows the ghost as it moves. The
+   triangular tail is drawn with a CSS pseudo-element. */
+.scene .ghost-attention-badge {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -52px;
+  transform: translate(-50%, -50%);
+  background: #ffb84a;
+  color: #1a1a1f;
+  border-radius: 11px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  animation: attention-bob 0.7s ease-in-out infinite alternate;
+}
+
+.scene .ghost-attention-badge::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #ffb84a;
+}
+
+.scene .ghost-attention-badge[hidden] { display: none; }
+
+@keyframes attention-bob {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-3px); }
+}
+
+/* Lifecycle gate: also pause the badge bob. */
+body.lifecycle-inactive .scene .ghost-attention-badge {
+  animation-play-state: paused !important;
 }

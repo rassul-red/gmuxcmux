@@ -7595,6 +7595,10 @@ final class Workspace: Identifiable, ObservableObject {
         }
     }
 
+    func panelShellActivityState(forPanelId panelId: UUID) -> PanelShellActivityState? {
+        panelShellActivityStates[panelId]
+    }
+
     func updatePanelShellActivityState(panelId: UUID, state: PanelShellActivityState) {
         guard panels[panelId] != nil else { return }
         let previousState = panelShellActivityStates[panelId] ?? .unknown

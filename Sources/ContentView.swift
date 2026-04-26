@@ -1826,6 +1826,11 @@ func installFileDropOverlay(on window: NSWindow, tabManager: TabManager) {
 struct ContentView: View {
     @ObservedObject var updateViewModel: UpdateViewModel
     let windowId: UUID
+    /// Optional content rendered between `sidebarView` and the terminal area.
+    /// Used by the embedded Ghost dashboard layout in `cmuxApp` to put the
+    /// GUI grid in the middle column. `nil` keeps the legacy two-column
+    /// (sidebar + terminals) layout untouched.
+    var middleColumnBuilder: (() -> AnyView)? = nil
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var notificationStore: TerminalNotificationStore
     @EnvironmentObject var sidebarState: SidebarState
@@ -3046,8 +3051,12 @@ struct ContentView: View {
         let layout: AnyView
         // When matching terminal background, use HStack so both sidebar and terminal
         // sit directly on the window background with no intermediate layers.
+        // When an embedded middle column is in play, also force HStack: the
+        // overlay mode's `.padding(.leading, sidebarWidth)` trick can't
+        // accommodate a real third column without a layout-pass-aware size.
         let useWithinWindow = sidebarBlendMode == SidebarBlendModeOption.withinWindow.rawValue
             && !sidebarMatchTerminalBackground
+            && middleColumnBuilder == nil
         if useWithinWindow {
             // Overlay mode: terminal extends full width, sidebar on top
             // This allows withinWindow blur to see the terminal content
@@ -3066,6 +3075,9 @@ struct ContentView: View {
                 HStack(spacing: 0) {
                     if sidebarState.isVisible {
                         sidebarView
+                    }
+                    if let middleColumnBuilder {
+                        middleColumnBuilder()
                     }
                     terminalContentWithSidebarDropOverlay
                 }

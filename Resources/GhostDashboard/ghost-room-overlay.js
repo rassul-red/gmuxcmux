@@ -75,22 +75,10 @@
     { projectID: "demo-docs",  projectName: "docs",  projectCwd: "/tmp/gmux-demo/docs",  projectStatus: "running" },
   ];
 
-  // Per-project ghost roster. Each ghost: [suffix, startState, label].
-  // After the new "1 ghost per workspace + free wanderer" model, each demo
-  // project shows N assigned ghosts (one per simulated terminal instance) and
-  // dashboard.js will render them as seated. The free wandering ghost is
-  // appended below so the demo always shows the "waiting for next task"
-  // ghost roaming around.
-  var DEMO_ROSTER = {
-    "demo-web":   [["alpha", "Coding",    "Edit"],     ["beta",  "Reading",   "Read"]],
-    "demo-api":   [["alpha", "Reading",   "Read"],     ["beta",  "Coding",    "Edit"]],
-    "demo-infra": [["alpha", "Checking",  "Bash"]],
-    "demo-docs":  [["alpha", "Reading",   "Glob"],     ["beta",  "Reviewing", "WebFetch"]],
-  };
-
   // Synthetic free-ghost id matches the Swift constant
   // `GhostRosterManager.freeGhostSuffix` so JS and Swift agree on the shape.
   var FREE_GHOST_SUFFIX = "__free__";
+
 
   // Active states the demo rotates through. Idle is added separately so
   // wander beats are common enough to be visible.
@@ -106,19 +94,6 @@
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   function nowIso() { return new Date().toISOString(); }
 
-  function buildAssignedEntry(suffix, projectID, state, label, tableID) {
-    return {
-      ghostID: projectID + "#" + suffix,
-      state: state,
-      label: label,
-      lastActivityAt: state === "Idle" ? null : Date.now(),
-      lifecycle: state === "Idle" ? "idle" : "working",
-      motion: (Math.random() < 0.3) ? "walking" : "settled",
-      tableID: tableID,
-      motionStartedAt: nowIso(),
-    };
-  }
-
   function buildFreeEntry(projectID) {
     return {
       ghostID: projectID + "#" + FREE_GHOST_SUFFIX,
@@ -133,21 +108,17 @@
   }
 
   function buildDemoSnapshot() {
+    // Each workspace starts with **only** its free wandering ghost — exactly
+    // the state of a fresh cmux workspace before the user has launched any
+    // Claude Code instance. The rotation timer promotes the free ghost to a
+    // desk to simulate launches.
     var projects = DEMO_PROJECTS.map(function (p) {
-      var roster = DEMO_ROSTER[p.projectID] || [];
-      var ghosts = roster.map(function (entry, idx) {
-        return buildAssignedEntry(entry[0], p.projectID, entry[1], entry[2] || "", idx);
-      });
-      // Append the per-workspace free wandering ghost. The Swift roster
-      // omits it once all 4 desks are assigned; the demo uses ≤ 2 assigned
-      // ghosts so the free ghost is always present.
-      ghosts.push(buildFreeEntry(p.projectID));
       return {
         projectID: p.projectID,
         projectName: p.projectName,
         projectCwd: p.projectCwd,
         projectStatus: p.projectStatus,
-        ghosts: ghosts,
+        ghosts: [buildFreeEntry(p.projectID)],
         selectedProjectID: null,
       };
     });
@@ -161,20 +132,27 @@
 
   function rotateOne() {
     if (!demoState) return;
-    // Pick a random project then a random *assigned* ghost (those with a
-    // tableID — the free wanderer is never rotated; it just keeps roaming).
     var project = pick(demoState.projects);
     if (!project || !project.ghosts || !project.ghosts.length) return;
+
     var assigned = project.ghosts.filter(function (g) {
       return g.tableID !== null && g.tableID !== undefined;
     });
+
+    // The demo never auto-promotes the free ghost to a desk — promotion
+    // models "user launched a Claude Code instance" and must come from real
+    // events, not the seeder. A fresh workspace stays at "1 free wanderer"
+    // forever in pure demo mode. Once real Swift data arrives, the bridge
+    // takes over via the realWatchdog and the demo stops.
+    //
+    // The rotation only animates ghosts that are *already* seated, flipping
+    // them between Working and Idle-at-desk. With zero assigned ghosts,
+    // rotation is a no-op.
     if (!assigned.length) return;
     var ghost = pick(assigned);
-
     if (ghost.state === "Idle") {
-      // Wake back up at the desk: pick a new active state. The ghost stays
-      // seated the whole time (assigned ghosts never get up under the new
-      // "1 ghost per terminal instance" model).
+      // Wake back up at the desk; assigned ghosts never get up under the
+      // new "1 ghost per terminal instance" model.
       var newState = pick(ACTIVE_POOL);
       var labels = LABEL_POOL[newState] || [""];
       ghost.state = newState;
@@ -184,8 +162,7 @@
       ghost.lastActivityAt = Date.now();
       ghost.lifecycle = "working";
     } else {
-      // Stop working: collapse to "Idle at desk". Stays seated; only the
-      // pose flips from Working → Idle.
+      // Stop working → "Idle at desk". Stays seated; pose flips.
       ghost.state = "Idle";
       ghost.label = "";
       ghost.motion = "settled";
@@ -254,12 +231,14 @@
     }, 1500);
   }
 
-  // Kick the demo seeder on document ready.
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    maybeStartDemo();
-  } else {
-    document.addEventListener("DOMContentLoaded", maybeStartDemo);
-  }
+  // Demo seeder disabled: per-terminal ghosts are now rendered natively by
+  // AgentsCanvasView (Sources/GhostDashboard/Canvas/). The synthetic
+  // "infra/api/web/docs" projects were leaking into hover tooltips when the
+  // bridge race went the demo's way. The functions above remain so a future
+  // explicit demo entry point can opt-in via window.__ghostRoomDemo.start().
+  window.__ghostRoomDemo = window.__ghostRoomDemo || {};
+  window.__ghostRoomDemo.start = startDemo;
+  window.__ghostRoomDemo.stop = stopDemo;
 
   // Honor the dashboard activity gate so the demo sleeps when the
   // window is hidden (saves battery during the demo recording).

@@ -72,6 +72,10 @@ public struct GhostEntryState: Codable, Equatable {
     /// because pre-#17 ghosts (and tests written before this change) do not
     /// carry the field.
     public let motionStartedAt: String?
+    /// True when the underlying agent has an unread cmux notification
+    /// (Claude Code "Notification" hook fired). The JS renderer paints a
+    /// "?" speech-bubble badge above the ghost.
+    public let needsAttention: Bool?
 
     public init(
         ghostID: String,
@@ -81,7 +85,8 @@ public struct GhostEntryState: Codable, Equatable {
         lifecycle: String? = nil,
         motion: String? = nil,
         tableID: Int? = nil,
-        motionStartedAt: String? = nil
+        motionStartedAt: String? = nil,
+        needsAttention: Bool? = nil
     ) {
         self.ghostID = ghostID
         self.state = state
@@ -91,6 +96,7 @@ public struct GhostEntryState: Codable, Equatable {
         self.motion = motion
         self.tableID = tableID
         self.motionStartedAt = motionStartedAt
+        self.needsAttention = needsAttention
     }
 }
 
@@ -201,4 +207,9 @@ public enum GhostBridgeAction {
     public static let follow = "follow"
     public static let broadcast = "broadcast"
     public static let groupChat = "groupChat"
+    /// Click on an individual ghost in the room view. Carries `projectID`
+    /// (cmux workspace UUID) plus `data.ghostID` so the host can later route
+    /// to a specific Claude Code session inside the workspace. Today the
+    /// dashboard controller falls back to focusing the workspace as a whole.
+    public static let focusGhost = "focusGhost"
 }

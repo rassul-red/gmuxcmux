@@ -254,6 +254,18 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
             // Replay the most recent workspace labels so a label update that
             // arrived before the page finished loading is not lost.
             self.sendWorkspaceLabels(self.lastPushedWorkspaceLabels)
+            // Roster snapshots/deltas pushed during page-load were silently
+            // dropped (window.__ghostBridge wasn't installed yet). Replay the
+            // current roster as a fresh snapshot so the renderer reflects all
+            // the per-terminal ghosts that registered while we were loading.
+            let manager = GhostRosterManager.shared
+            let currentRoster = manager.roster
+            self.bridgeHost.resendCurrentSnapshot(
+                roster: currentRoster,
+                metadataProvider: { [weak manager] pid in
+                    manager?.metadataProvider(pid) ?? (pid, "", "")
+                }
+            )
         }
     }
 

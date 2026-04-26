@@ -30,6 +30,7 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
     public var onInterrupt: ActionHandler?
     public var onNewTask: ActionHandler?
     public var onFollow: ActionHandler?
+    public var onFocusGhost: ActionHandler?
 
     /// Test seam: invoked whenever a `broadcast` or `groupChat` message lands.
     /// Production code uses the `dlog` no-op path; tests can capture intent.
@@ -172,6 +173,8 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
             onNewTask?(action)
         case GhostBridgeAction.follow:
             onFollow?(action)
+        case GhostBridgeAction.focusGhost:
+            onFocusGhost?(action)
         case GhostBridgeAction.broadcast, GhostBridgeAction.groupChat:
             #if DEBUG
             dlog("bridge.action.noop action=\(action.action)")
@@ -285,7 +288,8 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
             lifecycle: entry.lifecycle.rawValue,
             motion: entry.motion.rawValue,
             tableID: entry.tableID,
-            motionStartedAt: entry.motionStartedAt.map { iso8601.string(from: $0) }
+            motionStartedAt: entry.motionStartedAt.map { iso8601.string(from: $0) },
+            needsAttention: entry.needsAttention
         )
     }
 
@@ -384,6 +388,25 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
     }
 
     // MARK: - Test seam
+
+    /// Re-push the supplied roster as a fresh full snapshot. Called by the
+    /// WebView host after `didFinish` navigation completes, because deltas
+    /// emitted during page-load are silently dropped — the
+    /// `window.__ghostBridge && ...` guard short-circuits before
+    /// `bridge.js` has installed `__ghostBridge`. Replaying the current
+    /// roster as a snapshot gives the renderer a consistent starting state.
+    public func resendCurrentSnapshot(
+        roster: [String: ProjectGhostRoster],
+        metadataProvider: @escaping (String) -> (name: String, cwd: String, status: String)
+    ) {
+        coalesceQueue.async { [weak self] in
+            guard let self else { return }
+            let snapshot = Self.buildSnapshot(roster: roster, metadata: metadataProvider)
+            self.lastEmittedRoster = roster
+            self.hasEmittedInitialSnapshot = true
+            self.push(snapshot: snapshot)
+        }
+    }
 
     /// Synchronously process a roster diff (skipping the Combine hop) so
     /// unit tests can assert deterministic delta emission without waiting on

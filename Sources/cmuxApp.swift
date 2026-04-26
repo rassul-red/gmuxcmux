@@ -336,18 +336,21 @@ struct cmuxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // Embedded layout: cmux's full ContentView (workspace sidebar +
-            // terminals) on the left, the Ghost dashboard's office grid on the
-            // right. The standalone GhostDashboardWindowController is still
-            // reachable from the View menu for users who want a pop-out, but
-            // is no longer the sole/primary main view.
-            HSplitView {
-                ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
-                    .frame(minWidth: 600)
-
-                GhostEmbeddedGridView()
-                    .frame(minWidth: 320, idealWidth: 520)
-            }
+            // Three-column embedded layout: cmux workspace sidebar (left) |
+            // Ghost dashboard office grid (middle) | cmux terminal area
+            // (right). ContentView accepts a `middleColumnBuilder` and inserts
+            // it between its sidebar and terminal in the HStack layout (see
+            // ContentView.contentAndSidebarLayout).
+            ContentView(
+                updateViewModel: appDelegate.updateViewModel,
+                windowId: primaryWindowId,
+                middleColumnBuilder: {
+                    AnyView(
+                        GhostEmbeddedGridView()
+                            .frame(minWidth: 320, idealWidth: 520)
+                    )
+                }
+            )
                 .environmentObject(tabManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)

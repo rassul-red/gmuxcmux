@@ -22,6 +22,13 @@
 		A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */; };
 		A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */; };
 		A8DA000035A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */; };
+		A8DA000041A1B2C3D4E5F608 /* AgentRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000051A1B2C3D4E5F608 /* AgentRole.swift */; };
+		A8DA000042A1B2C3D4E5F608 /* AgentStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000052A1B2C3D4E5F608 /* AgentStatus.swift */; };
+		A8DA000043A1B2C3D4E5F608 /* AgentRoleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000053A1B2C3D4E5F608 /* AgentRoleStore.swift */; };
+		A8DA000044A1B2C3D4E5F608 /* AgentWorldStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000054A1B2C3D4E5F608 /* AgentWorldStore.swift */; };
+		A8DA000045A1B2C3D4E5F608 /* AgentAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000055A1B2C3D4E5F608 /* AgentAvatarView.swift */; };
+		A8DA000046A1B2C3D4E5F608 /* AgentsCanvasRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000056A1B2C3D4E5F608 /* AgentsCanvasRoomView.swift */; };
+		A8DA000047A1B2C3D4E5F608 /* AgentsCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000057A1B2C3D4E5F608 /* AgentsCanvasView.swift */; };
 		FE002101 /* FileExplorerRootResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002001 /* FileExplorerRootResolverTests.swift */; };
 		FE002102 /* FileExplorerStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002002 /* FileExplorerStoreTests.swift */; };
 			A5001001 /* cmuxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001011 /* cmuxApp.swift */; };
@@ -247,6 +254,13 @@
 		A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Dock/TerminalDockView.swift; sourceTree = "<group>"; };
 		A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/TerminalControllerSendText.swift; sourceTree = "<group>"; };
 		A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostEmbeddedGridView.swift; sourceTree = "<group>"; };
+		A8DA000051A1B2C3D4E5F608 /* AgentRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentRole.swift; sourceTree = "<group>"; };
+		A8DA000052A1B2C3D4E5F608 /* AgentStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentStatus.swift; sourceTree = "<group>"; };
+		A8DA000053A1B2C3D4E5F608 /* AgentRoleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentRoleStore.swift; sourceTree = "<group>"; };
+		A8DA000054A1B2C3D4E5F608 /* AgentWorldStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentWorldStore.swift; sourceTree = "<group>"; };
+		A8DA000055A1B2C3D4E5F608 /* AgentAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentAvatarView.swift; sourceTree = "<group>"; };
+		A8DA000056A1B2C3D4E5F608 /* AgentsCanvasRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentsCanvasRoomView.swift; sourceTree = "<group>"; };
+		A8DA000057A1B2C3D4E5F608 /* AgentsCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Canvas/AgentsCanvasView.swift; sourceTree = "<group>"; };
 		FE002001 /* FileExplorerRootResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerRootResolverTests.swift; sourceTree = "<group>"; };
 		FE002002 /* FileExplorerStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerStoreTests.swift; sourceTree = "<group>"; };
 			A5001000 /* cmux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cmux.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -594,6 +608,13 @@
 				A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */,
 				A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */,
 				A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */,
+				A8DA000051A1B2C3D4E5F608 /* AgentRole.swift */,
+				A8DA000052A1B2C3D4E5F608 /* AgentStatus.swift */,
+				A8DA000053A1B2C3D4E5F608 /* AgentRoleStore.swift */,
+				A8DA000054A1B2C3D4E5F608 /* AgentWorldStore.swift */,
+				A8DA000055A1B2C3D4E5F608 /* AgentAvatarView.swift */,
+				A8DA000056A1B2C3D4E5F608 /* AgentsCanvasRoomView.swift */,
+				A8DA000057A1B2C3D4E5F608 /* AgentsCanvasView.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -946,6 +967,13 @@
 				A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */,
 				A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */,
 				A8DA000035A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift in Sources */,
+				A8DA000041A1B2C3D4E5F608 /* AgentRole.swift in Sources */,
+				A8DA000042A1B2C3D4E5F608 /* AgentStatus.swift in Sources */,
+				A8DA000043A1B2C3D4E5F608 /* AgentRoleStore.swift in Sources */,
+				A8DA000044A1B2C3D4E5F608 /* AgentWorldStore.swift in Sources */,
+				A8DA000045A1B2C3D4E5F608 /* AgentAvatarView.swift in Sources */,
+				A8DA000046A1B2C3D4E5F608 /* AgentsCanvasRoomView.swift in Sources */,
+				A8DA000047A1B2C3D4E5F608 /* AgentsCanvasView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

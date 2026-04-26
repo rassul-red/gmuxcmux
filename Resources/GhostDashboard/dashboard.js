@@ -214,6 +214,14 @@
     dom.style.top = startY + "%";
     dom.dataset.role = role;
     tile.sceneEl.appendChild(dom);
+    // Speech bubble badge — displayed only when `needsAttention` is true.
+    // Anchored to the worker's position via the same left/top transform so
+    // it follows the ghost as it walks.
+    var badge = el("div", "ghost-attention-badge", "?");
+    badge.style.left = startX + "%";
+    badge.style.top = startY + "%";
+    badge.hidden = true;
+    tile.sceneEl.appendChild(badge);
     return {
       ghostID: ghostID,
       role: role,
@@ -222,6 +230,7 @@
       pose: "Idle",
       pos: { x: startX, y: startY },
       dom: dom,
+      badge: badge,
       lastWanderTick: 0,
       walkTimer: 0,
     };
@@ -246,6 +255,16 @@
     worker.pos.y = y;
     worker.dom.style.left = x + "%";
     worker.dom.style.top = y + "%";
+    if (worker.badge) {
+      worker.badge.style.left = x + "%";
+      worker.badge.style.top = y + "%";
+    }
+  }
+
+  function setWorkerAttention(worker, on) {
+    if (!worker.badge) return;
+    worker.badge.hidden = !on;
+    setClass(worker.dom, "needs-attention", !!on);
   }
 
   function deskPos(slotIdx) {
@@ -301,6 +320,7 @@
       tile.workers.forEach(function (w) {
         if (w.walkTimer) clearTimeout(w.walkTimer);
         w.dom.remove();
+        if (w.badge) w.badge.remove();
       });
       tile.workers.clear();
       return;
@@ -322,6 +342,7 @@
       if (w) {
         if (w.walkTimer) clearTimeout(w.walkTimer);
         w.dom.remove();
+        if (w.badge) w.badge.remove();
       }
       tile.workers["delete"](id);
     });
@@ -339,21 +360,26 @@
         tile.workers.set(g.ghostID, worker);
       }
       worker.slotIdx = slotIdx;
-      var newMode = modeFor(g.state, hasTable);
+      var needsAttention = !!g.needsAttention;
+      var newMode = needsAttention ? "attention" : modeFor(g.state, hasTable);
       var newPose = poseFor(newMode, g.state);
 
-      // Tooltip metadata — refreshed every snapshot so hover always shows
-      // current status. Stash on the dom node so the global hover handler
-      // can read it without keeping a Worker reference.
+      // Tooltip + click metadata — refreshed every snapshot so hover/click
+      // always reflect current status. Stash on the dom node so the global
+      // hover/click handlers can read it without keeping a Worker reference.
+      worker.dom.dataset.projectId = project.projectID || "";
       worker.dom.dataset.projectName = project.projectName || project.projectID || "";
+      worker.dom.dataset.ghostId = g.ghostID || "";
       worker.dom.dataset.ghostState = g.state || "Idle";
       worker.dom.dataset.ghostLabel = g.label || "";
       worker.dom.dataset.ghostFree = hasTable ? "0" : "1";
+      worker.dom.dataset.ghostAttention = needsAttention ? "1" : "0";
       worker.dom.dataset.lastActivityAt = (g.lastActivityAt != null) ? String(g.lastActivityAt) : "";
 
       if (worker.mode !== newMode || worker.pose !== newPose) {
         transitionToMode(worker, newMode, newPose);
       }
+      setWorkerAttention(worker, needsAttention);
     }
   }
 
@@ -375,13 +401,12 @@
   }
 
   function render() {
-    var sorted = projects.slice().sort(function (a, b) {
-      var ai = (a && a.projectID) || "";
-      var bi = (b && b.projectID) || "";
-      return ai < bi ? -1 : ai > bi ? 1 : 0;
-    });
+    // Render in the order the host emitted them. The host (Swift bridge)
+    // emits in cmux workspace order, which matches the sidebar ordering.
+    // Alphabetical sort would be unstable when projectIDs are workspace
+    // UUIDs.
     for (var i = 0; i < TILE_COUNT; i += 1) {
-      syncTile(tiles[i], sorted[i] || null);
+      syncTile(tiles[i], projects[i] || null);
     }
   }
 
@@ -516,6 +541,7 @@
     var t = ensureTooltip();
     var d = target.dataset || {};
     var isFree = d.ghostFree === "1";
+    var needsAttention = d.ghostAttention === "1";
     var stateText = isFree
       ? "Idle - waiting for task"
       : (d.ghostState || "Idle") + (d.ghostLabel ? " - " + d.ghostLabel : "");
@@ -524,6 +550,9 @@
       lines.push('<div class="ghost-tooltip-title">' + escapeHtml(d.projectName) + '</div>');
     }
     lines.push('<div class="ghost-tooltip-state">' + escapeHtml(stateText) + '</div>');
+    if (needsAttention) {
+      lines.push('<div class="ghost-tooltip-attention">Needs attention</div>');
+    }
     var when = formatLastActivity(d.lastActivityAt);
     if (when) lines.push('<div class="ghost-tooltip-time">' + escapeHtml(when) + '</div>');
     t.innerHTML = lines.join("");
@@ -544,6 +573,30 @@
     if (tooltipEl) tooltipEl.style.display = "none";
   }
 
+  // ---------- click → focus session ---------------------------------------
+
+  // Click on a ghost: send `focusGhost` to the host so cmux jumps to that
+  // workspace (and, eventually, the specific Claude Code session inside it).
+  // No-op when the bridge isn't attached (pure demo mode).
+  function handleWorkerClick(ev) {
+    var target = ev.target;
+    if (!target || target.nodeName !== "IMG") return;
+    if (!target.classList.contains("worker")) return;
+    var d = target.dataset || {};
+    var projectID = d.projectId || "";
+    var ghostID = d.ghostId || "";
+    if (!projectID && !ghostID) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var bridge = window.__ghostBridge;
+    if (!bridge || typeof bridge.sendAction !== "function") return;
+    bridge.sendAction({
+      action: "focusGhost",
+      projectID: projectID,
+      data: { ghostID: ghostID },
+    });
+  }
+
   // ---------- boot ---------------------------------------------------------
 
   function init() {
@@ -562,6 +615,7 @@
     document.addEventListener("mouseover", showTooltip, true);
     document.addEventListener("mousemove", moveTooltip, true);
     document.addEventListener("mouseout", hideTooltip, true);
+    document.addEventListener("click", handleWorkerClick, true);
 
     // The WebViewHost's lifecycle shim posts to window.__ghostLifecycle (the
     // #5 RAF gate). Wrap it so the dashboard's CSS animations also suspend

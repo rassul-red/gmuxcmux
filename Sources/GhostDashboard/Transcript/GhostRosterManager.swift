@@ -52,6 +52,10 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
     /// Wall-clock timestamp the current `motion` phase started.
     /// JS overlay uses this to drive the walk animation.
     public var motionStartedAt: Date?
+    /// True when the underlying agent has an unread notification (Claude
+    /// Code "Notification" hook fired, or any other surface notification on
+    /// this workspace). Drives the "?" speech-bubble badge above the ghost.
+    public var needsAttention: Bool
 
     public init(
         id: String,
@@ -61,7 +65,8 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
         lifecycle: GhostLifecycle = .idle,
         tableID: Int? = nil,
         motion: GhostMotion = .spawning,
-        motionStartedAt: Date? = nil
+        motionStartedAt: Date? = nil,
+        needsAttention: Bool = false
     ) {
         self.id = id
         self.state = state
@@ -71,6 +76,7 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
         self.tableID = tableID
         self.motion = motion
         self.motionStartedAt = motionStartedAt
+        self.needsAttention = needsAttention
     }
 
     public var ghostID: String { id }
@@ -155,16 +161,34 @@ public final class GhostRosterManager: ObservableObject {
         /// Captures the `state` at the time motion last changed. Used to
         /// detect post-launch idle-collapse so we can flip back to wandering.
         var lastSnapshotState: GhostState
+        /// Cmux-managed attention flag — true when the workspace has an
+        /// unread notification on this agent's surface.
+        var needsAttention: Bool = false
+        /// The "free ghost generation" this session inherited when it was
+        /// first observed. Renders as the trailing `__free__<gen>` in the
+        /// ghost id so the previously-wandering ghost visually walks to the
+        /// desk on launch and a fresh wandering ghost (with the next gen)
+        /// spawns to take its place. See `nextFreeGen` on `ProjectContext`.
+        var freeGen: Int
     }
 
     private struct ProjectContext {
         let cwd: String
-        let watcher: ClaudeTranscriptWatcher
+        /// Optional: cmux-managed workspace projects do not run a transcript
+        /// watcher. They are driven directly by `noteAgent*` calls fed from
+        /// `Workspace.statusEntries["claude_code"]` observers.
+        let watcher: ClaudeTranscriptWatcher?
         var sessionStates: [URL: GhostStateMachine]
         var sessionLabels: [URL: String]
         var sessionMotion: [URL: SessionMotion]
         var orderedSessions: [URL]
         var lastSnapshot: ProjectGhostRoster?
+        /// Next "free ghost generation" — the suffix used by the trailing
+        /// wandering ghost in the snapshot. Bumped each time a new session
+        /// claims the current free ghost's identity, so the wandering DOM
+        /// element transitions in place from `wander` to `walk-to-desk` and
+        /// a fresh wandering ghost takes its slot.
+        var nextFreeGen: Int = 0
     }
 
     private var projects: [String: ProjectContext] = [:]
@@ -194,7 +218,7 @@ public final class GhostRosterManager: ObservableObject {
     deinit {
         idleRefreshTimer?.cancel()
         for (_, ctx) in projects {
-            ctx.watcher.stop()
+            ctx.watcher?.stop()
         }
     }
 
@@ -259,7 +283,7 @@ public final class GhostRosterManager: ObservableObject {
                 self.commitOnMain(projectID: projectID, snapshot: despawnSnapshot)
             }
             if let ctx = self.projects.removeValue(forKey: projectID) {
-                ctx.watcher.stop()
+                ctx.watcher?.stop()
             }
             if self.projects.isEmpty {
                 self.stopIdleRefreshTimer()
@@ -273,6 +297,246 @@ public final class GhostRosterManager: ObservableObject {
                 self.roster.removeValue(forKey: projectID)
             }
         }
+    }
+
+    // MARK: - cmux-managed agents (no transcript watcher)
+    //
+    // The dashboard observes `Workspace.statusEntries["claude_code"]` per
+    // cmux workspace and translates state changes into these calls. The
+    // synthetic session URL `cmux-agent://<workspaceID>/<agentKey>` keeps
+    // session bookkeeping (table assignment, motion clock, idle/active
+    // state) compatible with the transcript-driven path even though no file
+    // exists on disk.
+
+    /// Stable synthetic URL for a cmux-managed agent session.
+    private static func cmuxAgentSessionURL(workspaceID: String, agentKey: String) -> URL {
+        // Encode arbitrary characters so URL parsing never fails on weird
+        // workspace names. UUIDs and the "claude_code" key are both safe but
+        // future agent keys may not be.
+        let escapedWorkspace = workspaceID.addingPercentEncoding(
+            withAllowedCharacters: .urlPathAllowed
+        ) ?? workspaceID
+        let escapedAgent = agentKey.addingPercentEncoding(
+            withAllowedCharacters: .urlPathAllowed
+        ) ?? agentKey
+        return URL(string: "cmux-agent://\(escapedWorkspace)/\(escapedAgent)")
+            ?? URL(fileURLWithPath: "/tmp/cmux-agent-\(escapedWorkspace)-\(escapedAgent)")
+    }
+
+    /// Register a cmux workspace as a project. Idempotent. No transcript
+    /// watcher is started — the workspace's ghost lifecycle is driven
+    /// entirely by `noteAgent*` calls fed from cmux status observers.
+    public func registerWorkspace(workspaceID: String, displayName: String, cwd: String = "") {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            if self.projects[workspaceID] != nil { return }
+            var ctx = ProjectContext(
+                cwd: cwd,
+                watcher: nil,
+                sessionStates: [:],
+                sessionLabels: [:],
+                sessionMotion: [:],
+                orderedSessions: [],
+                lastSnapshot: nil
+            )
+            // Build the initial snapshot (just the free wandering ghost) so
+            // the renderer shows the workspace tile immediately. Use the
+            // local `ctx` for inout, then write the populated context back
+            // into `self.projects` — avoids the Dictionary force-unwrap +
+            // inout pattern that Swift's exclusivity rules disallow.
+            self.startIdleRefreshTimerIfNeeded()
+            let snapshot = self.buildSnapshot(projectID: workspaceID, ctx: &ctx, now: Date())
+            ctx.lastSnapshot = snapshot
+            self.projects[workspaceID] = ctx
+            #if DEBUG
+            dlog("ghost.register workspace=\(workspaceID.prefix(8)) ghosts=\(snapshot.ghosts.count)")
+            #endif
+            self.commitOnMain(projectID: workspaceID, snapshot: snapshot)
+        }
+    }
+
+    /// Drop a cmux-managed workspace. Mirrors `unregister(projectID:)` but
+    /// skips the watcher.stop() (there is none).
+    public func unregisterWorkspace(workspaceID: String) {
+        unregister(projectID: workspaceID)
+    }
+
+    /// Note that an agent (e.g. Claude Code) launched in this workspace.
+    /// Treated as a session start: assigns a free desk and starts the
+    /// walk-to-desk animation. Idempotent for the same `agentKey`.
+    public func noteAgentLaunched(workspaceID: String, agentKey: String, label: String) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            self.applyAgentEvent(
+                workspaceID: workspaceID,
+                agentKey: agentKey,
+                label: label,
+                state: .Coding,
+                isLaunch: true,
+                ended: false
+            )
+        }
+    }
+
+    /// Note that the agent in this workspace went idle. Stays seated; the
+    /// renderer flips to the seated Idle pose.
+    public func noteAgentIdle(workspaceID: String, agentKey: String) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            self.applyAgentEvent(
+                workspaceID: workspaceID,
+                agentKey: agentKey,
+                label: "",
+                state: .Idle,
+                isLaunch: false,
+                ended: false
+            )
+        }
+    }
+
+    /// Toggle the "needs attention" speech-bubble for a cmux-managed agent.
+    /// Driven by `TerminalNotificationStore` per-tab unread counts so the
+    /// ghost surfaces a "?" badge and red-glow pose whenever Claude Code
+    /// fires a Notification hook.
+    public func noteAgentNeedsAttention(workspaceID: String, agentKey: String, needs: Bool) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            guard var ctx = self.projects[workspaceID] else { return }
+            let sessionKey = Self.cmuxAgentSessionURL(workspaceID: workspaceID, agentKey: agentKey)
+            // Only flip if a session exists for this agent. A notification
+            // arriving before the session-start hook (rare) would otherwise
+            // create a phantom session with no state machine.
+            guard ctx.orderedSessions.contains(sessionKey) else { return }
+            var motion = ctx.sessionMotion[sessionKey] ?? SessionMotion(
+                tableID: nil,
+                motionStartedAt: nil,
+                lastSnapshotState: .Idle,
+                freeGen: ctx.nextFreeGen
+            )
+            guard motion.needsAttention != needs else { return }
+            motion.needsAttention = needs
+            ctx.sessionMotion[sessionKey] = motion
+            let snapshot = self.buildSnapshot(projectID: workspaceID, ctx: &ctx, now: Date())
+            ctx.lastSnapshot = snapshot
+            self.projects[workspaceID] = ctx
+            self.commitOnMain(projectID: workspaceID, snapshot: snapshot)
+        }
+    }
+
+    /// Note that the agent in this workspace ended (terminal closed, PID
+    /// gone). Removes the session entry, freeing the desk.
+    public func noteAgentEnded(workspaceID: String, agentKey: String) {
+        stateQueue.async { [weak self] in
+            guard let self else { return }
+            self.dispatchPreconditionOffMain()
+            self.applyAgentEvent(
+                workspaceID: workspaceID,
+                agentKey: agentKey,
+                label: "",
+                state: .Idle,
+                isLaunch: false,
+                ended: true
+            )
+        }
+    }
+
+    private func applyAgentEvent(
+        workspaceID: String,
+        agentKey: String,
+        label: String,
+        state: GhostState,
+        isLaunch: Bool,
+        ended: Bool
+    ) {
+        guard var ctx = projects[workspaceID] else {
+            #if DEBUG
+            dlog("ghost.agent.miss workspace=\(workspaceID.prefix(8)) agent=\(agentKey.prefix(8)) launch=\(isLaunch) end=\(ended) — workspace not registered")
+            #endif
+            return
+        }
+        let sessionKey = Self.cmuxAgentSessionURL(workspaceID: workspaceID, agentKey: agentKey)
+        let now = Date()
+
+        if ended {
+            ctx.sessionStates.removeValue(forKey: sessionKey)
+            ctx.sessionLabels.removeValue(forKey: sessionKey)
+            ctx.sessionMotion.removeValue(forKey: sessionKey)
+            ctx.orderedSessions.removeAll { $0 == sessionKey }
+        } else {
+            var machine = ctx.sessionStates[sessionKey] ?? GhostStateMachine()
+            let isFirstObservation = !ctx.orderedSessions.contains(sessionKey)
+            if isFirstObservation {
+                machine.markSpawned(at: now)
+                ctx.orderedSessions.append(sessionKey)
+                // Claim the current free-ghost generation. The previously
+                // wandering ghost (rendered with id `__free__<gen>`) now
+                // becomes this session, so the JS overlay reuses its DOM and
+                // walks it to the desk in place. Bumping `nextFreeGen` makes
+                // the next snapshot append a fresh wandering ghost.
+                ctx.sessionMotion[sessionKey] = SessionMotion(
+                    tableID: nil,
+                    motionStartedAt: nil,
+                    lastSnapshotState: state,
+                    freeGen: ctx.nextFreeGen
+                )
+                ctx.nextFreeGen += 1
+            }
+            // Drive the state machine through a synthetic tool name so the
+            // existing `apply` path does its bookkeeping (lastActivity,
+            // didLaunch detection).
+            if state == .Idle {
+                // Force the visible state to Idle by clearing lastActivity
+                // implicitly: write Idle as the current state. We can't
+                // bypass the state machine cleanly, so apply a no-op tool
+                // and then mark idle via the time axis on the next sweep.
+                // For an immediate flip, we just record a label change and
+                // let buildSnapshot derive .Idle once the agent has been
+                // marked idle. The roster entry's state field reads from
+                // `currentState(now:)` which collapses to .Idle after the
+                // 60s threshold — too slow. Instead, build the entry
+                // directly using the supplied state.
+                ctx.sessionLabels[sessionKey] = label
+                ctx.sessionStates[sessionKey] = machine
+            } else {
+                let synthetic = (state == .Coding) ? "Edit" : "Read"
+                _ = machine.apply(toolName: synthetic, at: now)
+                ctx.sessionStates[sessionKey] = machine
+                ctx.sessionLabels[sessionKey] = label.isEmpty ? synthetic : label
+            }
+
+            // Assign a desk + start walk clock on launch.
+            if isLaunch {
+                var motion = ctx.sessionMotion[sessionKey] ?? SessionMotion(
+                    tableID: nil,
+                    motionStartedAt: nil,
+                    lastSnapshotState: .Idle,
+                    freeGen: ctx.nextFreeGen
+                )
+                if motion.tableID == nil {
+                    motion.tableID = Self.assignFreeTable(in: ctx.sessionMotion)
+                }
+                motion.motionStartedAt = now
+                motion.lastSnapshotState = state
+                ctx.sessionMotion[sessionKey] = motion
+            }
+        }
+
+        let snapshot = buildSnapshot(
+            projectID: workspaceID,
+            ctx: &ctx,
+            now: now,
+            overrideStates: ended ? [:] : [sessionKey: state]
+        )
+        ctx.lastSnapshot = snapshot
+        projects[workspaceID] = ctx
+        #if DEBUG
+        dlog("ghost.agent.apply workspace=\(workspaceID.prefix(8)) agent=\(agentKey.prefix(8)) launch=\(isLaunch) end=\(ended) ghosts=\(snapshot.ghosts.count) sessions=\(ctx.orderedSessions.count)")
+        #endif
+        commitOnMain(projectID: workspaceID, snapshot: snapshot)
     }
 
     /// Mark a single ghost (session) as needing human intervention. Drives
@@ -305,7 +569,8 @@ public final class GhostRosterManager: ObservableObject {
     ) {
         guard var ctx = projects[projectID] else { return }
         guard let sessionURL = ctx.orderedSessions.first(where: { url in
-            "\(projectID)#\(url.deletingPathExtension().lastPathComponent)" == ghostID
+            let freeGen = ctx.sessionMotion[url]?.freeGen ?? 0
+            return Self.ghostID(projectID: projectID, freeGen: freeGen) == ghostID
         }) else { return }
         var machine = ctx.sessionStates[sessionURL] ?? GhostStateMachine()
         mutate(&machine)
@@ -329,7 +594,8 @@ public final class GhostRosterManager: ObservableObject {
         let entries: [GhostEntry] = sessions.map { url in
             let machine = ctx.sessionStates[url] ?? GhostStateMachine()
             let label = ctx.sessionLabels[url] ?? ""
-            let id = "\(projectID)#\(url.deletingPathExtension().lastPathComponent)"
+            let freeGen = ctx.sessionMotion[url]?.freeGen ?? 0
+            let id = Self.ghostID(projectID: projectID, freeGen: freeGen)
             return GhostEntry(
                 id: id,
                 state: machine.currentState(now: now),
@@ -364,6 +630,9 @@ public final class GhostRosterManager: ObservableObject {
         dispatchPreconditionOffMain()
 
         guard var ctx = projects[projectID] else { return }
+        // cmux-managed workspaces have no transcript watcher; this path is
+        // only valid for projects registered via `register(projectID:cwd:)`.
+        guard let watcher = ctx.watcher else { return }
         var changed = false
 
         for event in events {
@@ -373,9 +642,9 @@ public final class GhostRosterManager: ObservableObject {
             // ghost.
             let sessionKey: URL = {
                 if let sid = event.sessionId, !sid.isEmpty {
-                    return ctx.watcher.projectDirectoryURL.appendingPathComponent("\(sid).jsonl")
+                    return watcher.projectDirectoryURL.appendingPathComponent("\(sid).jsonl")
                 }
-                return ctx.watcher.projectDirectoryURL.appendingPathComponent("default.jsonl")
+                return watcher.projectDirectoryURL.appendingPathComponent("default.jsonl")
             }()
 
             let names = event.toolUseNames
@@ -394,6 +663,16 @@ public final class GhostRosterManager: ObservableObject {
                 ctx.sessionLabels[sessionKey] = name
                 if isFirstObservation {
                     ctx.orderedSessions.append(sessionKey)
+                    // Claim the current free-ghost generation so the wandering
+                    // DOM element transitions in place (see notes on
+                    // `applyAgentEvent`).
+                    ctx.sessionMotion[sessionKey] = SessionMotion(
+                        tableID: nil,
+                        motionStartedAt: nil,
+                        lastSnapshotState: result.state,
+                        freeGen: ctx.nextFreeGen
+                    )
+                    ctx.nextFreeGen += 1
                 }
 
                 // Issue #17: agent launched (Idle → active). Assign a free
@@ -404,7 +683,8 @@ public final class GhostRosterManager: ObservableObject {
                     var motion = ctx.sessionMotion[sessionKey] ?? SessionMotion(
                         tableID: nil,
                         motionStartedAt: nil,
-                        lastSnapshotState: .Idle
+                        lastSnapshotState: .Idle,
+                        freeGen: ctx.nextFreeGen
                     )
                     if motion.tableID == nil {
                         motion.tableID = Self.assignFreeTable(in: ctx.sessionMotion)
@@ -467,7 +747,12 @@ public final class GhostRosterManager: ObservableObject {
         idleRefreshTimer = nil
     }
 
-    private func buildSnapshot(projectID: String, ctx: inout ProjectContext, now: Date) -> ProjectGhostRoster {
+    private func buildSnapshot(
+        projectID: String,
+        ctx: inout ProjectContext,
+        now: Date,
+        overrideStates: [URL: GhostState] = [:]
+    ) -> ProjectGhostRoster {
         // Deterministic ordering: oldest-seen first; cap at the desk count.
         let sessions = ctx.orderedSessions.prefix(Self.maxAssignedPerProject)
         var entries: [GhostEntry] = []
@@ -476,14 +761,18 @@ public final class GhostRosterManager: ObservableObject {
         for url in sessions {
             let machine = ctx.sessionStates[url] ?? GhostStateMachine()
             let label = ctx.sessionLabels[url] ?? ""
-            let id = "\(projectID)#\(url.deletingPathExtension().lastPathComponent)"
-            let state = machine.currentState(now: now)
+            // cmux-managed sessions pin their state explicitly so the renderer
+            // doesn't have to wait for the 60s idle threshold to flip
+            // Running → Idle.
+            let state = overrideStates[url] ?? machine.currentState(now: now)
 
             var motion = ctx.sessionMotion[url] ?? SessionMotion(
                 tableID: nil,
                 motionStartedAt: nil,
-                lastSnapshotState: .Idle
+                lastSnapshotState: .Idle,
+                freeGen: 0
             )
+            let id = Self.ghostID(projectID: projectID, freeGen: motion.freeGen)
             // Once a session is bound to a desk, the ghost stays seated for
             // the lifetime of the terminal instance — even when the session
             // collapses to `.Idle` ("Idle at desk"). The desk is only freed
@@ -503,31 +792,44 @@ public final class GhostRosterManager: ObservableObject {
                 state: state,
                 label: label,
                 lastActivity: machine.lastActivity,
-                lifecycle: machine.currentLifecycle(now: now),
+                lifecycle: motion.needsAttention ? .warning : machine.currentLifecycle(now: now),
                 tableID: motion.tableID,
                 motion: phase,
-                motionStartedAt: motion.motionStartedAt
+                motionStartedAt: motion.motionStartedAt,
+                needsAttention: motion.needsAttention
             ))
         }
 
         // Append a synthetic "free" wandering ghost unless every desk is
         // already taken. It represents the idle ghost waiting to be assigned
-        // to the next Claude Code instance the user launches.
+        // to the next Claude Code instance the user launches. Its id uses
+        // `ctx.nextFreeGen` so the JS overlay can transition the same DOM
+        // element from `wander` to `walk-to-desk` when this ghost gets
+        // claimed by the next session — and a fresh wandering ghost (with
+        // the bumped gen) takes its place.
         let assignedCount = entries.filter { $0.tableID != nil }.count
         if assignedCount < Self.maxAssignedPerProject {
             entries.append(GhostEntry(
-                id: "\(projectID)#\(Self.freeGhostSuffix)",
+                id: Self.ghostID(projectID: projectID, freeGen: ctx.nextFreeGen),
                 state: .Idle,
                 label: "",
                 lastActivity: nil,
                 lifecycle: .idle,
                 tableID: nil,
                 motion: .wandering,
-                motionStartedAt: nil
+                motionStartedAt: nil,
+                needsAttention: false
             ))
         }
 
         return ProjectGhostRoster(projectID: projectID, ghosts: entries)
+    }
+
+    /// Compose the ghost id used by the JS overlay. The `__free__<gen>`
+    /// scheme keys workers by their generation so the wandering DOM element
+    /// is reused when a session "claims" the current free ghost on launch.
+    private static func ghostID(projectID: String, freeGen: Int) -> String {
+        return "\(projectID)#\(freeGhostSuffix)\(freeGen)"
     }
 
     /// Pick the lowest free seat index in `0..<maxGhostsPerProject`. Lowest-
