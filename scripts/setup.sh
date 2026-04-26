@@ -9,6 +9,9 @@ cd "$PROJECT_DIR"
 echo "==> Initializing submodules..."
 git submodule update --init --recursive
 
+echo "==> Applying patches/ghostty/*.patch (idempotent)..."
+"$SCRIPT_DIR/apply-ghostty-patches.sh"
+
 echo "==> Checking for zig..."
 if ! command -v zig &> /dev/null; then
     echo "Error: zig is not installed."
