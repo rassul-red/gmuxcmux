@@ -1090,6 +1090,35 @@
         }
       }
     },
+    "debug.menu.dashboardFrameTiming": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dashboard frame timing"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダッシュボードのフレームタイミング"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Час кадру панелі керування"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "대시보드 프레임 타이밍"
+          }
+        }
+      }
+    },
     "debug.windows.browserProfilePopover.title": {
       "extractionState": "manual",
       "localizations": {

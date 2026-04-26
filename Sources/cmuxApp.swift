@@ -505,6 +505,16 @@ struct cmuxApp: App {
                     ) {
                         BrowserProfilePopoverDebugWindowController.shared.show()
                     }
+                    #if DEBUG
+                    Button(
+                        String(
+                            localized: "debug.menu.dashboardFrameTiming",
+                            defaultValue: "Dashboard frame timing"
+                        )
+                    ) {
+                        DashboardFrameTimingController.shared.start()
+                    }
+                    #endif
                     Button("Debug Window Controls…") {
                         DebugWindowControlsWindowController.shared.show()
                     }
