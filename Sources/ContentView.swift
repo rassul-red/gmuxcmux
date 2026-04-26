@@ -11914,6 +11914,14 @@ struct SidebarWorkspaceSnapshotBuilder {
         let pullRequestRows: [PullRequestDisplay]
         let listeningPorts: [Int]
     }
+
+    static func shouldApplyImmediatelyWhileContextMenuVisible(
+        previous: Snapshot?,
+        next: Snapshot
+    ) -> Bool {
+        previous?.title != next.title ||
+            previous?.customColorHex != next.customColorHex
+    }
 }
 
 private final class SidebarTabItemContextMenuState: ObservableObject {
@@ -12631,12 +12639,15 @@ private struct TabItemView: View, Equatable {
 
         if contextMenuState.isVisible {
             let deferredBaseline = contextMenuState.pendingWorkspaceSnapshot ?? workspaceSnapshotStorage
-            // Color changes are driven by explicit clicks in the Workspace Color
-            // submenu, and SwiftUI's context-menu content does not reliably fire
-            // `.onDisappear` after a button tap (issue #3037). Apply color
-            // changes immediately so the row reflects the user's selection
-            // instead of waiting on a flush that may never happen.
-            if deferredBaseline?.customColorHex != nextSnapshot.customColorHex {
+            // Title and color changes are driven by explicit context-menu actions,
+            // and SwiftUI's context-menu content does not reliably fire `.onDisappear`
+            // after a button tap (issue #3037). Apply them immediately so the row
+            // reflects the user's selection instead of waiting on a flush that may
+            // never happen.
+            if SidebarWorkspaceSnapshotBuilder.shouldApplyImmediatelyWhileContextMenuVisible(
+                previous: deferredBaseline,
+                next: nextSnapshot
+            ) {
                 workspaceSnapshotStorage = nextSnapshot
                 contextMenuState.pendingWorkspaceSnapshot = nil
                 contextMenuState.hasDeferredWorkspaceObservationInvalidation = false

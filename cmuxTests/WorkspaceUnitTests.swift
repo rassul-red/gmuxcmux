@@ -24,6 +24,69 @@ func makeTemporaryBrowserProfile(named prefix: String) throws -> BrowserProfileD
 }
 
 final class SidebarSelectedWorkspaceColorTests: XCTestCase {
+    private func sidebarSnapshot(
+        title: String = "Workspace",
+        customColorHex: String? = nil,
+        metadataEntries: [SidebarStatusEntry] = []
+    ) -> SidebarWorkspaceSnapshotBuilder.Snapshot {
+        SidebarWorkspaceSnapshotBuilder.Snapshot(
+            title: title,
+            customDescription: nil,
+            isPinned: false,
+            customColorHex: customColorHex,
+            remoteWorkspaceSidebarText: nil,
+            remoteConnectionStatusText: "",
+            remoteStateHelpText: "",
+            copyableSidebarSSHError: nil,
+            metadataEntries: metadataEntries,
+            metadataBlocks: [],
+            latestLog: nil,
+            progress: nil,
+            compactGitBranchSummaryText: nil,
+            compactBranchDirectoryRow: nil,
+            branchDirectoryLines: [],
+            branchLinesContainBranch: false,
+            pullRequestRows: [],
+            listeningPorts: []
+        )
+    }
+
+    func testContextMenuVisibleWorkspaceRenameAppliesSidebarSnapshotImmediately() {
+        let previous = sidebarSnapshot(title: "Old")
+        let next = sidebarSnapshot(title: "New")
+
+        XCTAssertTrue(
+            SidebarWorkspaceSnapshotBuilder.shouldApplyImmediatelyWhileContextMenuVisible(
+                previous: previous,
+                next: next
+            )
+        )
+    }
+
+    func testContextMenuVisibleWorkspaceColorChangeAppliesSidebarSnapshotImmediately() {
+        let previous = sidebarSnapshot(customColorHex: "#C0392B")
+        let next = sidebarSnapshot(customColorHex: "#00A1FF")
+
+        XCTAssertTrue(
+            SidebarWorkspaceSnapshotBuilder.shouldApplyImmediatelyWhileContextMenuVisible(
+                previous: previous,
+                next: next
+            )
+        )
+    }
+
+    func testContextMenuVisibleMetadataOnlyChangeCanStayDeferred() {
+        let previous = sidebarSnapshot(metadataEntries: [SidebarStatusEntry(key: "a", value: "1")])
+        let next = sidebarSnapshot(metadataEntries: [SidebarStatusEntry(key: "a", value: "2")])
+
+        XCTAssertFalse(
+            SidebarWorkspaceSnapshotBuilder.shouldApplyImmediatelyWhileContextMenuVisible(
+                previous: previous,
+                next: next
+            )
+        )
+    }
+
     func testLightModeUsesConfiguredSelectedWorkspaceBackgroundColor() {
         guard let color = sidebarSelectedWorkspaceBackgroundNSColor(for: .light).usingColorSpace(.sRGB) else {
             XCTFail("Expected sRGB-convertible color")
