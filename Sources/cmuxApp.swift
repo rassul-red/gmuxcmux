@@ -336,10 +336,18 @@ struct cmuxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // Ghost Projects dashboard is the sole main view at app launch
-            // (epic #1, AC 1). The legacy ContentView is reachable only via
-            // the dashboard's terminal dock once that wiring lands.
-            GhostDashboardView()
+            // Embedded layout: cmux's full ContentView (workspace sidebar +
+            // terminals) on the left, the Ghost dashboard's office grid on the
+            // right. The standalone GhostDashboardWindowController is still
+            // reachable from the View menu for users who want a pop-out, but
+            // is no longer the sole/primary main view.
+            HSplitView {
+                ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
+                    .frame(minWidth: 600)
+
+                GhostEmbeddedGridView()
+                    .frame(minWidth: 320, idealWidth: 520)
+            }
                 .environmentObject(tabManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)
@@ -362,13 +370,6 @@ struct cmuxApp: App {
                     if ProcessInfo.processInfo.environment["CMUX_UI_TEST_SHOW_SETTINGS"] == "1" {
                         DispatchQueue.main.async {
                             appDelegate.openPreferencesWindow(debugSource: "uiTestShowSettings")
-                        }
-                    }
-                    if ProcessInfo.processInfo.environment["CMUX_AUTO_SHOW_GHOST"] == "1" {
-                        // Defer to next runloop tick so the primary window finishes
-                        // its menu/menubar wiring before we open the dashboard.
-                        DispatchQueue.main.async {
-                            GhostDashboardWindowController.shared.show()
                         }
                     }
                 }

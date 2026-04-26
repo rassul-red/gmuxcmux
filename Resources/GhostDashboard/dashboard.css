@@ -72,7 +72,11 @@ html, body {
 .scene .worker {
   position: absolute;
   z-index: 3;
-  pointer-events: none;
+  /* Re-enable pointer events on workers so hover tooltips fire — the
+     `.scene` container itself stays pointer-transparent so background
+     clicks (project selection) still pass through. */
+  pointer-events: auto;
+  cursor: default;
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
   transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
@@ -104,7 +108,7 @@ html, body {
   animation: none;
 }
 
-/* Room overlay: project name + status pill at top. */
+/* Room overlay: a single capsule that shows the cmux workspace name. */
 .room-header {
   position: absolute;
   top: 8px;
@@ -113,54 +117,67 @@ html, body {
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
   pointer-events: none;
 }
 
-.room-name {
-  font-size: 13px;
+.workspace-pill {
+  font-size: 11px;
   font-weight: 600;
-  color: #e6e6f0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(20, 18, 28, 0.78);
+  color: #f2f2f7;
+  letter-spacing: 0.01em;
   white-space: nowrap;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1 1 auto;
-  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-.status-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: #6B8AFD;
-  color: #0a090e;
-  letter-spacing: 0.03em;
-  text-transform: lowercase;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  flex: 0 0 auto;
-}
-
-/* State color tokens for the status pill. */
-.ghost-room.state-idle    .status-pill { background: #6B8AFD; }
-.ghost-room.state-coding  .status-pill { background: #5BD68E; }
-.ghost-room.state-warning .status-pill { background: #F5685A; }
-.ghost-room.state-walking .status-pill { background: #F1C152; }
-
-.ghost-room.placeholder .status-pill {
-  background: rgba(230, 230, 240, 0.3);
-  color: rgba(230, 230, 240, 0.75);
-}
-.ghost-room.placeholder .room-name {
-  color: rgba(230, 230, 240, 0.55);
-}
+.workspace-pill[hidden] { display: none; }
 
 /* Lifecycle gate: freeze every animation/transition inside the scene. */
 body.lifecycle-inactive .scene *,
 body.lifecycle-inactive .scene {
   animation-play-state: paused !important;
   transition: none !important;
+}
+
+/* Hover tooltip: floats next to the cursor, shows the ghost's project,
+   current state + tool, and last-activity timestamp. Single instance is
+   reused across hovers and positioned via inline left/top in pixels. */
+.ghost-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  background: rgba(15, 14, 22, 0.94);
+  color: #f2f2f7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 120px;
+  max-width: 240px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.ghost-tooltip-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.ghost-tooltip-state {
+  color: #d6d6e0;
+}
+
+.ghost-tooltip-time {
+  margin-top: 3px;
+  color: #8e8ea0;
+  font-size: 10px;
 }

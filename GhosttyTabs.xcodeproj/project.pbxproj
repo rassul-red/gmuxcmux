@@ -21,6 +21,7 @@
 		A8DA000032A1B2C3D4E5F608 /* TerminalDockMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */; };
 		A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */; };
 		A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */; };
+		A8DA000035A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */; };
 		FE002101 /* FileExplorerRootResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002001 /* FileExplorerRootResolverTests.swift */; };
 		FE002102 /* FileExplorerStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002002 /* FileExplorerStoreTests.swift */; };
 			A5001001 /* cmuxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001011 /* cmuxApp.swift */; };
@@ -245,6 +246,7 @@
 		A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Dock/TerminalDockMirror.swift; sourceTree = "<group>"; };
 		A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Dock/TerminalDockView.swift; sourceTree = "<group>"; };
 		A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/TerminalControllerSendText.swift; sourceTree = "<group>"; };
+		A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostEmbeddedGridView.swift; sourceTree = "<group>"; };
 		FE002001 /* FileExplorerRootResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerRootResolverTests.swift; sourceTree = "<group>"; };
 		FE002002 /* FileExplorerStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerStoreTests.swift; sourceTree = "<group>"; };
 			A5001000 /* cmux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cmux.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -591,6 +593,7 @@
 				A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */,
 				A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */,
 				A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */,
+				A8DA000025A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -942,6 +945,7 @@
 				A8DA000032A1B2C3D4E5F608 /* TerminalDockMirror.swift in Sources */,
 				A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */,
 				A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */,
+				A8DA000035A1B2C3D4E5F608 /* GhostEmbeddedGridView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

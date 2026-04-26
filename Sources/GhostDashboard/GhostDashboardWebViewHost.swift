@@ -25,6 +25,8 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
     private var pageReady = false
     private var lastPendingActive: Bool?
     private var gateCancellable: AnyCancellable?
+    private var workspaceLabelsCancellable: AnyCancellable?
+    private var lastPushedWorkspaceLabels: [String] = []
 
     init() {
         let bridge = GhostBridgeHost()
@@ -45,12 +47,16 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
         self.bridgeHost.webView = self
         translatesAutoresizingMaskIntoConstraints = false
         setValue(false, forKey: "drawsBackground")
-        // Disable WebKit's built-in pinch zoom so the SwiftUI
-        // `MagnificationGesture` driving `GhostCanvasZoomView` (Issue #16) is
-        // not swallowed by WKWebView's responder chain.
-        allowsMagnification = false
+        // Use WebKit's native pinch zoom + scroll-magnify. The previous
+        // SwiftUI `scaleEffect` path (GhostCanvasZoomView) was unreliable for
+        // the metal-backed WebView surface, especially below 1.0. The
+        // embedded grid view drives `magnification` programmatically via
+        // EmbeddedGridZoomController for HUD buttons; trackpad pinch now
+        // works natively.
+        allowsMagnification = true
         navigationDelegate = self
         subscribeToActivityGate()
+        subscribeToWorkspaceLabels()
         attachRosterBridge()
         loadDashboardAsset()
     }
@@ -79,6 +85,7 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
 
     deinit {
         gateCancellable?.cancel()
+        workspaceLabelsCancellable?.cancel()
     }
 
     // MARK: - Activity gate
@@ -92,6 +99,46 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
             .sink { [weak self] active in
                 self?.dispatchLifecycle(active: active)
             }
+    }
+
+    /// Push the first four cmux workspace titles to the dashboard whenever
+    /// they change. The JS side renders them as a capsule per room — see
+    /// `dashboard.js#applyWorkspaceLabels`.
+    private func subscribeToWorkspaceLabels() {
+        workspaceLabelsCancellable = GhostDashboardController.shared
+            .$workspaceLabels
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] labels in
+                self?.dispatchWorkspaceLabels(labels)
+            }
+    }
+
+    private func dispatchWorkspaceLabels(_ labels: [String]) {
+        lastPushedWorkspaceLabels = labels
+        guard pageReady else { return }
+        sendWorkspaceLabels(labels)
+    }
+
+    private func sendWorkspaceLabels(_ labels: [String]) {
+        guard let data = try? JSONSerialization.data(withJSONObject: labels),
+              let json = String(data: data, encoding: .utf8) else {
+            #if DEBUG
+            dlog("ghost.workspaceLabels serialization failed")
+            #endif
+            return
+        }
+        let js = """
+        (function(labels){
+          window.__cmuxWorkspaceLabels = labels;
+          try {
+            if (window.cmuxGhostDashboard
+                && typeof window.cmuxGhostDashboard.applyWorkspaceLabels === 'function') {
+              window.cmuxGhostDashboard.applyWorkspaceLabels(labels);
+            }
+          } catch (e) { /* dashboard JS may still be booting */ }
+        })(\(json));
+        """
+        evaluateJavaScript(js, completionHandler: nil)
     }
 
     private func dispatchLifecycle(active: Bool) {
@@ -204,6 +251,9 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
                 self.lastPendingActive = nil
                 self.dispatchLifecycle(active: pending)
             }
+            // Replay the most recent workspace labels so a label update that
+            // arrived before the page finished loading is not lost.
+            self.sendWorkspaceLabels(self.lastPushedWorkspaceLabels)
         }
     }
 

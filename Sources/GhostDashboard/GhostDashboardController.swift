@@ -24,6 +24,10 @@ final class GhostDashboardController: ObservableObject {
 
     @Published private(set) var selectedProjectID: UUID?
 
+    /// Titles of the first four cmux workspaces, surfaced as room labels in
+    /// the embedded Ghost grid. Updated reactively via `bind(tabManager:)`.
+    @Published private(set) var workspaceLabels: [String] = []
+
     /// Roster manager owned by the dashboard. Stays empty (no registrations)
     /// until callers wire it up; the action bar only needs its publisher to
     /// satisfy the Follow contract.
@@ -33,7 +37,44 @@ final class GhostDashboardController: ObservableObject {
         rosterManager.$roster.eraseToAnyPublisher()
     }
 
+    private weak var boundTabManager: TabManager?
+    private var tabsCancellable: AnyCancellable?
+    private var titleCancellables: Set<AnyCancellable> = []
+
     private init() {}
+
+    // MARK: - Workspace labels
+
+    /// Subscribe to the tab manager's workspaces and republish the first four
+    /// titles. Last bind wins — multi-window setups feed the most recently
+    /// shown embedded grid.
+    func bind(tabManager: TabManager) {
+        guard boundTabManager !== tabManager else { return }
+        boundTabManager = tabManager
+        tabsCancellable = tabManager.$tabs
+            .sink { [weak self] tabs in
+                self?.subscribeToTitles(of: Array(tabs.prefix(4)))
+            }
+    }
+
+    private func subscribeToTitles(of tabs: [Workspace]) {
+        titleCancellables.removeAll()
+        recomputeLabels(from: tabs)
+        for tab in tabs {
+            tab.$title
+                .dropFirst()
+                .sink { [weak self] _ in
+                    self?.recomputeLabels(from: tabs)
+                }
+                .store(in: &titleCancellables)
+        }
+    }
+
+    private func recomputeLabels(from tabs: [Workspace]) {
+        let titles = tabs.map { $0.title }
+        guard workspaceLabels != titles else { return }
+        workspaceLabels = titles
+    }
 
     // MARK: - v1 actions
 

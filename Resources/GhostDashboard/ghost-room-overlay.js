@@ -75,13 +75,22 @@
     { projectID: "demo-docs",  projectName: "docs",  projectCwd: "/tmp/gmux-demo/docs",  projectStatus: "running" },
   ];
 
-  // Per-project ghost roster. Each ghost: [suffix, startState, label, motion?].
+  // Per-project ghost roster. Each ghost: [suffix, startState, label].
+  // After the new "1 ghost per workspace + free wanderer" model, each demo
+  // project shows N assigned ghosts (one per simulated terminal instance) and
+  // dashboard.js will render them as seated. The free wandering ghost is
+  // appended below so the demo always shows the "waiting for next task"
+  // ghost roaming around.
   var DEMO_ROSTER = {
-    "demo-web":   [["alpha", "Coding",   "Edit"],   ["beta",  "Idle",    ""],     ["gamma", "Reading",  "Read"]],
-    "demo-api":   [["alpha", "Reading",  "Read"],   ["beta",  "Coding",  "Edit"], ["gamma", "Idle",     ""]],
-    "demo-infra": [["alpha", "Idle",     ""],       ["beta",  "Checking","Bash"], ["gamma", "Coding",   "Edit"]],
-    "demo-docs":  [["alpha", "Reading",  "Glob"],   ["beta",  "Idle",    ""],     ["gamma", "Reviewing","WebFetch"]],
+    "demo-web":   [["alpha", "Coding",    "Edit"],     ["beta",  "Reading",   "Read"]],
+    "demo-api":   [["alpha", "Reading",   "Read"],     ["beta",  "Coding",    "Edit"]],
+    "demo-infra": [["alpha", "Checking",  "Bash"]],
+    "demo-docs":  [["alpha", "Reading",   "Glob"],     ["beta",  "Reviewing", "WebFetch"]],
   };
+
+  // Synthetic free-ghost id matches the Swift constant
+  // `GhostRosterManager.freeGhostSuffix` so JS and Swift agree on the shape.
+  var FREE_GHOST_SUFFIX = "__free__";
 
   // Active states the demo rotates through. Idle is added separately so
   // wander beats are common enough to be visible.
@@ -97,19 +106,29 @@
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   function nowIso() { return new Date().toISOString(); }
 
-  function buildEntry(suffix, projectID, state, label, tableID) {
-    var motion;
-    if (state === "Idle") motion = "wandering";
-    else motion = (Math.random() < 0.4) ? "walking" : "settled";
+  function buildAssignedEntry(suffix, projectID, state, label, tableID) {
     return {
       ghostID: projectID + "#" + suffix,
       state: state,
       label: label,
       lastActivityAt: state === "Idle" ? null : Date.now(),
       lifecycle: state === "Idle" ? "idle" : "working",
-      motion: motion,
+      motion: (Math.random() < 0.3) ? "walking" : "settled",
       tableID: tableID,
       motionStartedAt: nowIso(),
+    };
+  }
+
+  function buildFreeEntry(projectID) {
+    return {
+      ghostID: projectID + "#" + FREE_GHOST_SUFFIX,
+      state: "Idle",
+      label: "",
+      lastActivityAt: null,
+      lifecycle: "idle",
+      motion: "wandering",
+      tableID: null,
+      motionStartedAt: null,
     };
   }
 
@@ -117,8 +136,12 @@
     var projects = DEMO_PROJECTS.map(function (p) {
       var roster = DEMO_ROSTER[p.projectID] || [];
       var ghosts = roster.map(function (entry, idx) {
-        return buildEntry(entry[0], p.projectID, entry[1], entry[2] || "", idx);
+        return buildAssignedEntry(entry[0], p.projectID, entry[1], entry[2] || "", idx);
       });
+      // Append the per-workspace free wandering ghost. The Swift roster
+      // omits it once all 4 desks are assigned; the demo uses ≤ 2 assigned
+      // ghosts so the free ghost is always present.
+      ghosts.push(buildFreeEntry(p.projectID));
       return {
         projectID: p.projectID,
         projectName: p.projectName,
@@ -138,36 +161,34 @@
 
   function rotateOne() {
     if (!demoState) return;
-    // Pick a random project then a random ghost, flip its state.
+    // Pick a random project then a random *assigned* ghost (those with a
+    // tableID — the free wanderer is never rotated; it just keeps roaming).
     var project = pick(demoState.projects);
     if (!project || !project.ghosts || !project.ghosts.length) return;
-    var idx = Math.floor(Math.random() * project.ghosts.length);
-    var ghost = project.ghosts[idx];
+    var assigned = project.ghosts.filter(function (g) {
+      return g.tableID !== null && g.tableID !== undefined;
+    });
+    if (!assigned.length) return;
+    var ghost = pick(assigned);
 
     if (ghost.state === "Idle") {
-      // Wake up: walk to desk and start working.
+      // Wake back up at the desk: pick a new active state. The ghost stays
+      // seated the whole time (assigned ghosts never get up under the new
+      // "1 ghost per terminal instance" model).
       var newState = pick(ACTIVE_POOL);
       var labels = LABEL_POOL[newState] || [""];
       ghost.state = newState;
       ghost.label = pick(labels);
-      ghost.motion = "walking";
+      ghost.motion = "settled";
       ghost.motionStartedAt = nowIso();
       ghost.lastActivityAt = Date.now();
       ghost.lifecycle = "working";
-      // After ~2 s settle into the seat — schedule a follow-up delta so
-      // the renderer flips wander/walking → seated cleanly.
-      window.setTimeout(function () {
-        if (!demoState) return;
-        if (ghost.state !== newState) return; // raced; skip
-        ghost.motion = "settled";
-        emitProjectDelta(project);
-      }, 1900 + Math.floor(Math.random() * 600));
     } else {
-      // Step away from the desk — ghost wanders again.
+      // Stop working: collapse to "Idle at desk". Stays seated; only the
+      // pose flips from Working → Idle.
       ghost.state = "Idle";
       ghost.label = "";
-      ghost.motion = "wandering";
-      ghost.motionStartedAt = nowIso();
+      ghost.motion = "settled";
       ghost.lifecycle = "idle";
     }
     emitProjectDelta(project);

@@ -38,11 +38,13 @@
   // Free-roam bounding box (% within the tile).
   var ROAM = { xMin: 18, xMax: 78, yMin: 50, yMax: 82 };
 
-  // GhostState rawValue → tile-mode bucket. Mirrors the lower-cased keys used
-  // in the previous dashboard.js so the input contract is preserved.
+  // GhostState rawValue → tile-mode bucket for *assigned* ghosts (those with
+  // a `tableID`). Assigned ghosts are bound to their desk for the lifetime of
+  // the terminal instance — even when the session is Idle ("Idle at desk").
+  // Free ghosts (`tableID == null`) always wander regardless of state.
   var STATE_TO_MODE = {
-    idle:       "wander",
-    walking:    "wander",
+    idle:       "seated",
+    walking:    "seated",
     coding:     "seated",
     reading:    "seated",
     reviewing:  "seated",
@@ -98,9 +100,23 @@
     return ROLES[Math.abs(h) % ROLES.length];
   }
 
-  function modeFor(rawState) {
-    if (typeof rawState !== "string") return "wander";
-    return STATE_TO_MODE[rawState.toLowerCase()] || "wander";
+  function modeFor(rawState, hasTable) {
+    // Free ghosts (no desk assigned) always wander, regardless of state.
+    if (!hasTable) return "wander";
+    if (typeof rawState !== "string") return "seated";
+    return STATE_TO_MODE[rawState.toLowerCase()] || "seated";
+  }
+
+  function poseFor(mode, rawState) {
+    if (mode === "attention") return "Attention";
+    if (mode === "wander") return "Idle";
+    // Seated: use the Idle sprite when the session has collapsed to Idle so
+    // the ghost reads as "at desk but not currently working". Otherwise use
+    // the Working pose.
+    if (typeof rawState === "string" && rawState.toLowerCase() === "idle") {
+      return "Idle";
+    }
+    return "Working";
   }
 
   function bucketFor(rawState) {
@@ -163,12 +179,14 @@
       scene.appendChild(d);
     }
 
-    // Header overlay (project name + status pill).
+    // Header overlay: a single capsule that displays the cmux workspace
+    // name for this slot. The label is supplied by the host via
+    // `applyWorkspaceLabels` (driven by the first four cmux workspace
+    // titles) and stays hidden until cmux supplies one.
     var header = el("div", "room-header");
-    var name = el("span", "room-name", "—");
-    var pill = el("span", "status-pill", "no project");
-    header.appendChild(name);
-    header.appendChild(pill);
+    var workspacePill = el("span", "workspace-pill", "");
+    workspacePill.hidden = true;
+    header.appendChild(workspacePill);
     scene.appendChild(header);
 
     room.appendChild(scene);
@@ -177,8 +195,7 @@
       idx: idx,
       root: room,
       sceneEl: scene,
-      nameEl: name,
-      pillEl: pill,
+      workspacePillEl: workspacePill,
       projectID: null,
       workers: new Map(),
     };
@@ -281,8 +298,6 @@
     if (!project) {
       tile.projectID = null;
       tile.root.className = "ghost-room placeholder state-idle";
-      tile.nameEl.textContent = "—";
-      tile.pillEl.textContent = "no project";
       tile.workers.forEach(function (w) {
         if (w.walkTimer) clearTimeout(w.walkTimer);
         w.dom.remove();
@@ -294,8 +309,6 @@
     tile.projectID = project.projectID;
     var info = projectBucket(project);
     tile.root.className = "ghost-room state-" + info.bucket;
-    tile.nameEl.textContent = project.projectName || project.projectID || "(unnamed)";
-    tile.pillEl.textContent = (info.raw || "idle").toLowerCase();
 
     var ghosts = (project.ghosts || []).slice(0, DESK_SLOTS.length);
 
@@ -316,17 +329,27 @@
     // Add or update.
     for (var i = 0; i < ghosts.length; i += 1) {
       var g = ghosts[i];
+      var hasTable = (g.tableID !== null && g.tableID !== undefined);
+      // Slot the ghost into its assigned desk if it has one; otherwise the
+      // free ghost gets `slotIdx = -1` and roams freely.
+      var slotIdx = hasTable ? (g.tableID | 0) : -1;
       var worker = tile.workers.get(g.ghostID);
       if (!worker) {
-        worker = spawnWorker(tile, g.ghostID, i);
+        worker = spawnWorker(tile, g.ghostID, slotIdx);
         tile.workers.set(g.ghostID, worker);
       }
-      worker.slotIdx = i;
-      var newMode = modeFor(g.state);
-      var newPose;
-      if (newMode === "seated") newPose = "Working";
-      else if (newMode === "attention") newPose = "Attention";
-      else newPose = "Idle";
+      worker.slotIdx = slotIdx;
+      var newMode = modeFor(g.state, hasTable);
+      var newPose = poseFor(newMode, g.state);
+
+      // Tooltip metadata — refreshed every snapshot so hover always shows
+      // current status. Stash on the dom node so the global hover handler
+      // can read it without keeping a Worker reference.
+      worker.dom.dataset.projectName = project.projectName || project.projectID || "";
+      worker.dom.dataset.ghostState = g.state || "Idle";
+      worker.dom.dataset.ghostLabel = g.label || "";
+      worker.dom.dataset.ghostFree = hasTable ? "0" : "1";
+      worker.dom.dataset.lastActivityAt = (g.lastActivityAt != null) ? String(g.lastActivityAt) : "";
 
       if (worker.mode !== newMode || worker.pose !== newPose) {
         transitionToMode(worker, newMode, newPose);
@@ -410,6 +433,26 @@
     document.body.classList.toggle("lifecycle-inactive", !active);
   }
 
+  // Per-tile workspace name capsule. Labels are the first four cmux
+  // workspace titles, in workspace order. Slots without a label hide the
+  // capsule entirely.
+  var currentLabels = [];
+  function applyWorkspaceLabels(labels) {
+    currentLabels = Array.isArray(labels) ? labels.slice(0, TILE_COUNT) : [];
+    for (var i = 0; i < TILE_COUNT; i += 1) {
+      var tile = tiles[i];
+      if (!tile || !tile.workspacePillEl) continue;
+      var label = currentLabels[i];
+      if (typeof label === "string" && label.length > 0) {
+        tile.workspacePillEl.textContent = label;
+        tile.workspacePillEl.hidden = false;
+      } else {
+        tile.workspacePillEl.textContent = "";
+        tile.workspacePillEl.hidden = true;
+      }
+    }
+  }
+
   // ---------- free-roam loop ----------------------------------------------
 
   var lastTick = 0;
@@ -436,15 +479,89 @@
     requestAnimationFrame(loop);
   }
 
+  // ---------- hover tooltip -----------------------------------------------
+
+  var tooltipEl = null;
+
+  function ensureTooltip() {
+    if (tooltipEl) return tooltipEl;
+    tooltipEl = el("div", "ghost-tooltip");
+    tooltipEl.style.display = "none";
+    document.body.appendChild(tooltipEl);
+    return tooltipEl;
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function formatLastActivity(msStr) {
+    if (!msStr) return null;
+    var ms = Number(msStr);
+    if (!isFinite(ms) || ms <= 0) return null;
+    var delta = Math.max(0, Date.now() - ms);
+    if (delta < 5000) return "just now";
+    if (delta < 60000) return Math.floor(delta / 1000) + "s ago";
+    if (delta < 3600000) return Math.floor(delta / 60000) + "m ago";
+    return Math.floor(delta / 3600000) + "h ago";
+  }
+
+  function showTooltip(ev) {
+    var target = ev.target;
+    if (!target || target.nodeName !== "IMG") return;
+    if (!target.classList.contains("worker")) return;
+    var t = ensureTooltip();
+    var d = target.dataset || {};
+    var isFree = d.ghostFree === "1";
+    var stateText = isFree
+      ? "Idle - waiting for task"
+      : (d.ghostState || "Idle") + (d.ghostLabel ? " - " + d.ghostLabel : "");
+    var lines = [];
+    if (d.projectName) {
+      lines.push('<div class="ghost-tooltip-title">' + escapeHtml(d.projectName) + '</div>');
+    }
+    lines.push('<div class="ghost-tooltip-state">' + escapeHtml(stateText) + '</div>');
+    var when = formatLastActivity(d.lastActivityAt);
+    if (when) lines.push('<div class="ghost-tooltip-time">' + escapeHtml(when) + '</div>');
+    t.innerHTML = lines.join("");
+    t.style.display = "block";
+    moveTooltip(ev);
+  }
+
+  function moveTooltip(ev) {
+    if (!tooltipEl || tooltipEl.style.display === "none") return;
+    var pad = 14;
+    tooltipEl.style.left = (ev.clientX + pad) + "px";
+    tooltipEl.style.top = (ev.clientY + pad) + "px";
+  }
+
+  function hideTooltip(ev) {
+    var target = ev.target;
+    if (!target || !target.classList || !target.classList.contains("worker")) return;
+    if (tooltipEl) tooltipEl.style.display = "none";
+  }
+
   // ---------- boot ---------------------------------------------------------
 
   function init() {
     buildGrid();
     render();
 
+    // If the host pushed labels before this script booted, replay them.
+    if (Array.isArray(window.__cmuxWorkspaceLabels)) {
+      applyWorkspaceLabels(window.__cmuxWorkspaceLabels);
+    }
+
     window.addEventListener(SNAPSHOT_EVENT,  function (ev) { applySnapshot(ev.detail); });
     window.addEventListener(DELTA_EVENT,     function (ev) { applyDelta(ev.detail); });
     window.addEventListener(LIFECYCLE_EVENT, function (ev) { applyLifecycle(ev.detail); });
+
+    document.addEventListener("mouseover", showTooltip, true);
+    document.addEventListener("mousemove", moveTooltip, true);
+    document.addEventListener("mouseout", hideTooltip, true);
 
     // The WebViewHost's lifecycle shim posts to window.__ghostLifecycle (the
     // #5 RAF gate). Wrap it so the dashboard's CSS animations also suspend
@@ -474,5 +591,6 @@
     applySnapshot: applySnapshot,
     applyDelta: applyDelta,
     applyLifecycle: applyLifecycle,
+    applyWorkspaceLabels: applyWorkspaceLabels,
   };
 })();

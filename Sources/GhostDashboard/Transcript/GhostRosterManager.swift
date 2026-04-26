@@ -11,12 +11,14 @@ import Bonsplit
 ///
 /// - `spawning`:  freshly observed session that has never had a tool_use yet
 ///                (i.e. the ghost just appeared in the room).
-/// - `wandering`: idle drift around the room, including the post-launch idle
-///                collapse where a previously-seated ghost gets up and leaves
-///                its desk.
+/// - `wandering`: idle drift around the room. Used for the per-workspace
+///                "free" ghost that has not yet been assigned to a session.
 /// - `walking`:   moving toward an assigned table after the agent launched
 ///                in its terminal tab.
-/// - `settled`:   parked at its assigned table with the agent active.
+/// - `settled`:   parked at its assigned table. Once seated, the ghost stays
+///                bound to that desk for the lifetime of the session — even
+///                when the session goes idle ("Idle at desk"). It only leaves
+///                when the user deletes the terminal instance.
 public enum GhostMotion: String, Codable, Equatable, Sendable {
     case spawning
     case wandering
@@ -91,7 +93,19 @@ public struct ProjectGhostRoster: Equatable, Sendable {
 /// Self-verifies via `dispatchPrecondition` that the parsing path never lands
 /// on `.main`, per the seed `evaluation_principles.typing_latency_zero`.
 public final class GhostRosterManager: ObservableObject {
-    public static let maxGhostsPerProject = 5
+    /// Max number of *assigned* (seated) ghosts per workspace. Matches the
+    /// renderer's `DESK_SLOTS.length` so every assigned ghost has a desk.
+    /// One additional "free" wandering ghost may be appended on top — it
+    /// represents the next ghost waiting to be assigned to a new task.
+    public static let maxAssignedPerProject = 4
+
+    /// Synthetic ghost id suffix for the per-workspace "free" ghost.
+    public static let freeGhostSuffix = "__free__"
+
+    /// Backwards-compat alias: total renderable ghosts per project (assigned
+    /// + the optional free ghost). Kept as a property name for any callers
+    /// or tests that still reference the old constant.
+    public static let maxGhostsPerProject = maxAssignedPerProject + 1
 
     /// Process-wide singleton consumed by `GhostDashboardWebViewHost` so the
     /// Swift→JS bridge has a stable roster to subscribe to. Tests construct
@@ -308,8 +322,10 @@ public final class GhostRosterManager: ObservableObject {
         now: Date
     ) -> ProjectGhostRoster {
         // Same shape as `buildSnapshot` but every ghost gets `.despawning` so
-        // the renderer can play the exit animation before removal.
-        let sessions = ctx.orderedSessions.prefix(Self.maxGhostsPerProject)
+        // the renderer can play the exit animation before removal. The free
+        // ghost is omitted — it never had a session so it has nothing to
+        // despawn from.
+        let sessions = ctx.orderedSessions.prefix(Self.maxAssignedPerProject)
         let entries: [GhostEntry] = sessions.map { url in
             let machine = ctx.sessionStates[url] ?? GhostStateMachine()
             let label = ctx.sessionLabels[url] ?? ""
@@ -452,10 +468,10 @@ public final class GhostRosterManager: ObservableObject {
     }
 
     private func buildSnapshot(projectID: String, ctx: inout ProjectContext, now: Date) -> ProjectGhostRoster {
-        // Deterministic ordering: oldest-seen first; cap at 5.
-        let sessions = ctx.orderedSessions.prefix(Self.maxGhostsPerProject)
+        // Deterministic ordering: oldest-seen first; cap at the desk count.
+        let sessions = ctx.orderedSessions.prefix(Self.maxAssignedPerProject)
         var entries: [GhostEntry] = []
-        entries.reserveCapacity(sessions.count)
+        entries.reserveCapacity(sessions.count + 1)
 
         for url in sessions {
             let machine = ctx.sessionStates[url] ?? GhostStateMachine()
@@ -468,13 +484,10 @@ public final class GhostRosterManager: ObservableObject {
                 motionStartedAt: nil,
                 lastSnapshotState: .Idle
             )
-
-            // Idle collapse after a launch: ghost gets up from its desk and
-            // wanders again, but keeps `tableID` so the next launch returns
-            // it to the same chair (no musical chairs).
-            if state == .Idle && motion.lastSnapshotState != .Idle {
-                motion.motionStartedAt = now
-            }
+            // Once a session is bound to a desk, the ghost stays seated for
+            // the lifetime of the terminal instance — even when the session
+            // collapses to `.Idle` ("Idle at desk"). The desk is only freed
+            // on `unregister`/session removal.
             motion.lastSnapshotState = state
             ctx.sessionMotion[url] = motion
 
@@ -496,7 +509,25 @@ public final class GhostRosterManager: ObservableObject {
                 motionStartedAt: motion.motionStartedAt
             ))
         }
-        return ProjectGhostRoster(projectID: projectID, ghosts: Array(entries))
+
+        // Append a synthetic "free" wandering ghost unless every desk is
+        // already taken. It represents the idle ghost waiting to be assigned
+        // to the next Claude Code instance the user launches.
+        let assignedCount = entries.filter { $0.tableID != nil }.count
+        if assignedCount < Self.maxAssignedPerProject {
+            entries.append(GhostEntry(
+                id: "\(projectID)#\(Self.freeGhostSuffix)",
+                state: .Idle,
+                label: "",
+                lastActivity: nil,
+                lifecycle: .idle,
+                tableID: nil,
+                motion: .wandering,
+                motionStartedAt: nil
+            ))
+        }
+
+        return ProjectGhostRoster(projectID: projectID, ghosts: entries)
     }
 
     /// Pick the lowest free seat index in `0..<maxGhostsPerProject`. Lowest-
@@ -515,6 +546,12 @@ public final class GhostRosterManager: ObservableObject {
 
     /// Derive the visible motion phase from the seat assignment + state +
     /// elapsed time since the motion clock started.
+    ///
+    /// An assigned ghost (one with a `tableID`) is **bound to its desk for
+    /// the lifetime of the terminal instance**: it walks there on launch
+    /// and stays settled afterwards, including when the underlying session
+    /// collapses to `.Idle` ("Idle at desk"). Only when the session is
+    /// unregistered does the desk free up.
     private static func derivePhase(
         state: GhostState,
         tableID: Int?,
@@ -523,14 +560,14 @@ public final class GhostRosterManager: ObservableObject {
     ) -> GhostMotion {
         // No seat yet → ghost is still floating around looking for one.
         guard tableID != nil else { return .spawning }
-        // Idle (either pre-activity or post-collapse) → wandering.
-        if state == .Idle { return .wandering }
-        // Active and we know when the walk started → settle after walkDuration.
+        // We know when the walk started → settle after walkDuration.
         if let started = motionStartedAt,
            now.timeIntervalSince(started) >= GhostMotion.walkDuration {
             return .settled
         }
-        return .walking
+        // Walking starts on launch; if no walk clock yet (e.g. session
+        // observed before any tool_use), treat as already settled.
+        return motionStartedAt == nil ? .settled : .walking
     }
 
     private func commitOnMain(projectID: String, snapshot: ProjectGhostRoster) {
