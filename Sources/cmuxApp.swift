@@ -336,7 +336,13 @@ struct cmuxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
+            Group {
+                if UserDefaults.standard.bool(forKey: "ghostDashboardEnabled") {
+                    GhostDashboardView()
+                } else {
+                    ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
+                }
+            }
                 .environmentObject(tabManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)

@@ -9,6 +9,11 @@
 		/* Begin PBXBuildFile section */
 		FE001101 /* FileExplorerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE001001 /* FileExplorerStore.swift */; };
 		FE001102 /* FileExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE001002 /* FileExplorerView.swift */; };
+		A8DA000011A1B2C3D4E5F608 /* GhostDashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000001A1B2C3D4E5F608 /* GhostDashboardWindowController.swift */; };
+		A8DA000012A1B2C3D4E5F608 /* GhostDashboardWebViewHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000002A1B2C3D4E5F608 /* GhostDashboardWebViewHost.swift */; };
+		A8DA000013A1B2C3D4E5F608 /* GhostDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000003A1B2C3D4E5F608 /* GhostDashboardView.swift */; };
+		A8DA000014A1B2C3D4E5F608 /* GhostDashboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000004A1B2C3D4E5F608 /* GhostDashboardLayout.swift */; };
+		A8DA000015A1B2C3D4E5F608 /* GhostDashboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DA000005A1B2C3D4E5F608 /* GhostDashboard */; };
 		FE002101 /* FileExplorerRootResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002001 /* FileExplorerRootResolverTests.swift */; };
 		FE002102 /* FileExplorerStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002002 /* FileExplorerStoreTests.swift */; };
 			A5001001 /* cmuxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001011 /* cmuxApp.swift */; };
@@ -218,6 +223,11 @@
 		/* Begin PBXFileReference section */
 		FE001001 /* FileExplorerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerStore.swift; sourceTree = "<group>"; };
 		FE001002 /* FileExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerView.swift; sourceTree = "<group>"; };
+		A8DA000001A1B2C3D4E5F608 /* GhostDashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostDashboardWindowController.swift; sourceTree = "<group>"; };
+		A8DA000002A1B2C3D4E5F608 /* GhostDashboardWebViewHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostDashboardWebViewHost.swift; sourceTree = "<group>"; };
+		A8DA000003A1B2C3D4E5F608 /* GhostDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostDashboardView.swift; sourceTree = "<group>"; };
+		A8DA000004A1B2C3D4E5F608 /* GhostDashboardLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostDashboardLayout.swift; sourceTree = "<group>"; };
+		A8DA000005A1B2C3D4E5F608 /* GhostDashboard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = GhostDashboard; sourceTree = "<group>"; };
 		FE002001 /* FileExplorerRootResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerRootResolverTests.swift; sourceTree = "<group>"; };
 		FE002002 /* FileExplorerStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerStoreTests.swift; sourceTree = "<group>"; };
 			A5001000 /* cmux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cmux.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -411,6 +421,7 @@
 				DA7A10CA710E000000000003 /* Localizable.xcstrings in Resources */,
 				DA7A10CA710E000000000004 /* InfoPlist.xcstrings in Resources */,
 				A5001623 /* cmux.sdef in Resources */,
+				A8DA000015A1B2C3D4E5F608 /* GhostDashboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -547,6 +558,10 @@
 				A5001655 /* CmuxDirectoryTrust.swift */,
 				FE001001 /* FileExplorerStore.swift */,
 				FE001002 /* FileExplorerView.swift */,
+				A8DA000001A1B2C3D4E5F608 /* GhostDashboardWindowController.swift */,
+				A8DA000002A1B2C3D4E5F608 /* GhostDashboardWebViewHost.swift */,
+				A8DA000003A1B2C3D4E5F608 /* GhostDashboardView.swift */,
+				A8DA000004A1B2C3D4E5F608 /* GhostDashboardLayout.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -568,6 +583,7 @@
 				DA7A10CA710E000000000001 /* Localizable.xcstrings */,
 				DA7A10CA710E000000000002 /* InfoPlist.xcstrings */,
 				A5001622 /* cmux.sdef */,
+				A8DA000005A1B2C3D4E5F608 /* GhostDashboard */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -883,6 +899,10 @@
 				A5001654 /* CmuxDirectoryTrust.swift in Sources */,
 				FE001101 /* FileExplorerStore.swift in Sources */,
 				FE001102 /* FileExplorerView.swift in Sources */,
+				A8DA000011A1B2C3D4E5F608 /* GhostDashboardWindowController.swift in Sources */,
+				A8DA000012A1B2C3D4E5F608 /* GhostDashboardWebViewHost.swift in Sources */,
+				A8DA000013A1B2C3D4E5F608 /* GhostDashboardView.swift in Sources */,
+				A8DA000014A1B2C3D4E5F608 /* GhostDashboardLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
