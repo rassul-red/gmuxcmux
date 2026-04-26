@@ -2926,6 +2926,25 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
 
 
 @MainActor
+final class AgentsCanvasTitleTests: XCTestCase {
+    func testAgentTitleUsesRenamedTerminalTabTitle() {
+        let workspace = Workspace()
+        guard let panelId = workspace.focusedPanelId,
+              let panel = workspace.panels[panelId] as? TerminalPanel else {
+            XCTFail("Expected a focused terminal panel in a new workspace")
+            return
+        }
+
+        workspace.setPanelCustomTitle(panelId: panelId, title: "Review Agent")
+
+        XCTAssertEqual(
+            AgentsCanvasView.resolvedAgentTitle(for: panel, in: workspace),
+            "Review Agent"
+        )
+    }
+}
+
+@MainActor
 final class WorkspaceTeardownTests: XCTestCase {
     func testTeardownAllPanelsClearsPanelMetadataCaches() {
         let workspace = Workspace()

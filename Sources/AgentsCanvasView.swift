@@ -17,6 +17,7 @@ struct AgentsCanvasView: View {
     let onFocusTerminal: (UUID, UUID) -> Void
 
     @StateObject private var worldStore = AgentWorldStore.shared
+    @StateObject private var metadataObserver = AgentsCanvasMetadataObserver()
 
     @State private var completedAtByPanelId: [UUID: Date] = [:]
     @State private var lastSeenStatusByPanelId: [UUID: AgentStatus] = [:]
@@ -34,6 +35,7 @@ struct AgentsCanvasView: View {
 
     var body: some View {
         let workspaces = workspaceTabs()
+        let _ = metadataObserver.revision
         let rooms = makeRoomSnapshots(for: workspaces)
 
         ZStack {
@@ -53,7 +55,11 @@ struct AgentsCanvasView: View {
         .onChange(of: rooms) { _, newRooms in
             handleStatusTransitions(in: newRooms)
         }
+        .onChange(of: workspaces.map { ObjectIdentifier($0) }) { _, _ in
+            metadataObserver.observe(workspaces: workspaces)
+        }
         .onAppear {
+            metadataObserver.observe(workspaces: workspaces)
             primeStatusBaseline(rooms: rooms)
         }
         .accessibilityIdentifier("AgentsCanvas")
@@ -290,6 +296,7 @@ struct AgentsCanvasView: View {
             let bounds = roomLocalBounds()
             let agents: [AgentsCanvasAgentSnapshot] = sorted.enumerated().map { panelIndex, panel in
                 let panelId = panel.id
+                let title = Self.resolvedAgentTitle(for: panel, in: workspace)
                 let status = currentStatus(forWorkspace: workspace, panelId: panelId)
                 let chair = chairPosition(forPanelIndex: panelIndex)
                 let state = states[panelId]
@@ -301,7 +308,7 @@ struct AgentsCanvasView: View {
                 return AgentsCanvasAgentSnapshot(
                     id: panelId,
                     workspaceId: workspace.id,
-                    title: panel.displayTitle,
+                    title: title,
                     role: roleStore.role(for: panelId),
                     status: status,
                     worldPosition: pos,
@@ -321,6 +328,11 @@ struct AgentsCanvasView: View {
                 agents: agents
             )
         }
+    }
+
+    @MainActor
+    static func resolvedAgentTitle(for panel: TerminalPanel, in workspace: Workspace) -> String {
+        workspace.panelTitle(panelId: panel.id) ?? panel.displayTitle
     }
 
     /// Fixed office furniture layout — every room shares the same arrangement:
@@ -441,6 +453,40 @@ struct AgentsCanvasAgentSnapshot: Identifiable, Equatable {
     let facingLeft: Bool
     let isAtDesk: Bool
     let isWalking: Bool
+}
+
+@MainActor
+final class AgentsCanvasMetadataObserver: ObservableObject {
+    @Published private(set) var revision: UInt64 = 0
+
+    private var observedWorkspaces: [ObjectIdentifier] = []
+    private var cancellables = Set<AnyCancellable>()
+
+    func observe(workspaces: [Workspace]) {
+        let nextWorkspaces = workspaces.map { ObjectIdentifier($0) }
+        guard nextWorkspaces != observedWorkspaces else { return }
+
+        observedWorkspaces = nextWorkspaces
+        cancellables.removeAll()
+
+        let publishers = workspaces.flatMap { workspace in
+            [
+                workspace.$title.dropFirst().map { _ in () }.eraseToAnyPublisher(),
+                workspace.$panels.dropFirst().map { _ in () }.eraseToAnyPublisher(),
+                workspace.$panelTitles.dropFirst().map { _ in () }.eraseToAnyPublisher(),
+                workspace.$panelCustomTitles.dropFirst().map { _ in () }.eraseToAnyPublisher(),
+            ]
+        }
+        guard !publishers.isEmpty else { return }
+
+        Publishers.MergeMany(publishers)
+            .sink { [weak self] in
+                Task { @MainActor in
+                    self?.revision &+= 1
+                }
+            }
+            .store(in: &cancellables)
+    }
 }
 
 enum AgentRoomDecorationKind: String, Equatable, Sendable {
