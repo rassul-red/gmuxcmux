@@ -106,41 +106,42 @@ struct GhostDashboardRightPanel: View {
 
 struct GhostTerminalDockPlaceholder: View {
     var body: some View {
-        VStack {
-            Spacer()
-            Text(String(localized: "dashboard.terminalDock.title", defaultValue: "Terminal Dock"))
-                .font(.headline)
-                .foregroundColor(.secondary)
-            Text(String(localized: "dashboard.terminalDock.wiredIn5", defaultValue: "Wired in #5"))
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.04))
+        TerminalDockView()
     }
 }
 
 // MARK: - Bottom action bar
 
+private struct GhostDashboardNewTaskTarget: Identifiable {
+    let workspaceID: UUID
+    var id: UUID { workspaceID }
+}
+
 struct GhostDashboardActionBar: View {
+    @ObservedObject private var controller = GhostDashboardController.shared
+    @State private var newTaskTarget: GhostDashboardNewTaskTarget?
+
     var body: some View {
         HStack(spacing: 8) {
-            Button(action: { logAction("openProject") }) {
+            Button(action: openProject) {
                 Text(String(localized: "dashboard.action.openProject", defaultValue: "Open Project"))
             }
+            .disabled(controller.selectedProjectID == nil)
 
-            Button(action: { logAction("interrupt") }) {
+            Button(action: interrupt) {
                 Text(String(localized: "dashboard.action.interrupt", defaultValue: "Interrupt"))
             }
+            .disabled(controller.selectedProjectID == nil)
 
-            Button(action: { logAction("newTask") }) {
+            Button(action: newTask) {
                 Text(String(localized: "dashboard.action.newTask", defaultValue: "New Task"))
             }
+            .disabled(controller.selectedProjectID == nil)
 
-            Button(action: { logAction("follow") }) {
+            Button(action: toggleFollow) {
                 Text(String(localized: "dashboard.action.follow", defaultValue: "Follow"))
             }
+            .disabled(controller.selectedProjectID == nil)
 
             Spacer()
 
@@ -170,6 +171,15 @@ struct GhostDashboardActionBar: View {
                 .frame(height: 1),
             alignment: .top
         )
+        .sheet(item: $newTaskTarget) { target in
+            NewTaskSheet(
+                isPresented: Binding(
+                    get: { newTaskTarget != nil },
+                    set: { if !$0 { newTaskTarget = nil } }
+                ),
+                workspaceID: target.workspaceID
+            )
+        }
     }
 
     private func v2Button(title: String, tooltip: String) -> some View {
@@ -188,9 +198,24 @@ struct GhostDashboardActionBar: View {
         .help(tooltip)
     }
 
-    private func logAction(_ name: String) {
-        #if DEBUG
-        dlog("ghost.dashboard action.\(name) (no-op until #5/#6)")
-        #endif
+    private func openProject() {
+        guard let id = controller.selectedProjectID else { return }
+        controller.selectProject(workspaceID: id)
+    }
+
+    private func interrupt() {
+        guard let id = controller.selectedProjectID else { return }
+        controller.interrupt(workspaceID: id)
+    }
+
+    private func newTask() {
+        guard let id = controller.selectedProjectID else { return }
+        newTaskTarget = GhostDashboardNewTaskTarget(workspaceID: id)
+    }
+
+    private func toggleFollow() {
+        guard let id = controller.selectedProjectID else { return }
+        controller.toggleFollow(workspaceID: id)
     }
 }
+

@@ -29,6 +29,7 @@ final class GhostDashboardWebViewHost: WKWebView, WKNavigationDelegate {
     init() {
         let bridge = GhostBridgeHost()
         self.bridgeHost = bridge
+        GhostDashboardController.shared.wire(bridgeHost: bridge)
 
         let config = WKWebViewConfiguration()
         let controller = config.userContentController
