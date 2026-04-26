@@ -375,6 +375,7 @@
       worker.dom.dataset.ghostFree = hasTable ? "0" : "1";
       worker.dom.dataset.ghostAttention = needsAttention ? "1" : "0";
       worker.dom.dataset.lastActivityAt = (g.lastActivityAt != null) ? String(g.lastActivityAt) : "";
+      worker.dom.dataset.panelId = g.panelID || "";
 
       if (worker.mode !== newMode || worker.pose !== newPose) {
         transitionToMode(worker, newMode, newPose);
@@ -590,10 +591,11 @@
     ev.stopPropagation();
     var bridge = window.__ghostBridge;
     if (!bridge || typeof bridge.sendAction !== "function") return;
+    var panelID = d.panelId || "";
     bridge.sendAction({
       action: "focusGhost",
       projectID: projectID,
-      data: { ghostID: ghostID },
+      data: { ghostID: ghostID, panelID: panelID },
     });
   }
 

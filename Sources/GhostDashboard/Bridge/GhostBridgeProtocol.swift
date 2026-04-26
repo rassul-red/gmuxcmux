@@ -76,6 +76,11 @@ public struct GhostEntryState: Codable, Equatable {
     /// (Claude Code "Notification" hook fired). The JS renderer paints a
     /// "?" speech-bubble badge above the ghost.
     public let needsAttention: Bool?
+    /// cmux terminal panel UUID this ghost represents. Optional because the
+    /// synthetic free wandering ghost has no terminal; assigned ghosts
+    /// always have one. JS round-trips this on click so we can focus the
+    /// specific surface within a workspace.
+    public let panelID: String?
 
     public init(
         ghostID: String,
@@ -86,7 +91,8 @@ public struct GhostEntryState: Codable, Equatable {
         motion: String? = nil,
         tableID: Int? = nil,
         motionStartedAt: String? = nil,
-        needsAttention: Bool? = nil
+        needsAttention: Bool? = nil,
+        panelID: String? = nil
     ) {
         self.ghostID = ghostID
         self.state = state
@@ -97,6 +103,7 @@ public struct GhostEntryState: Codable, Equatable {
         self.tableID = tableID
         self.motionStartedAt = motionStartedAt
         self.needsAttention = needsAttention
+        self.panelID = panelID
     }
 }
 

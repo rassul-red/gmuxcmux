@@ -289,7 +289,8 @@ public final class GhostBridgeHost: NSObject, WKScriptMessageHandler {
             motion: entry.motion.rawValue,
             tableID: entry.tableID,
             motionStartedAt: entry.motionStartedAt.map { iso8601.string(from: $0) },
-            needsAttention: entry.needsAttention
+            needsAttention: entry.needsAttention,
+            panelID: entry.panelID
         )
     }
 

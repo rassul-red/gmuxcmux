@@ -56,6 +56,11 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
     /// Code "Notification" hook fired, or any other surface notification on
     /// this workspace). Drives the "?" speech-bubble badge above the ghost.
     public var needsAttention: Bool
+    /// Per-cmux-panel identity. For assigned ghosts this is the terminal
+    /// panel UUID (the `agentKey`) so the JS overlay can round-trip a click
+    /// back to a specific surface. `nil` for the synthetic free wandering
+    /// ghost which has no terminal yet.
+    public var panelID: String?
 
     public init(
         id: String,
@@ -66,7 +71,8 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
         tableID: Int? = nil,
         motion: GhostMotion = .spawning,
         motionStartedAt: Date? = nil,
-        needsAttention: Bool = false
+        needsAttention: Bool = false,
+        panelID: String? = nil
     ) {
         self.id = id
         self.state = state
@@ -77,6 +83,7 @@ public struct GhostEntry: Identifiable, Equatable, Sendable {
         self.motion = motion
         self.motionStartedAt = motionStartedAt
         self.needsAttention = needsAttention
+        self.panelID = panelID
     }
 
     public var ghostID: String { id }
@@ -307,6 +314,17 @@ public final class GhostRosterManager: ObservableObject {
     // session bookkeeping (table assignment, motion clock, idle/active
     // state) compatible with the transcript-driven path even though no file
     // exists on disk.
+
+    /// Recover the cmux panel UUID (the `agentKey`) from a session URL built
+    /// by `cmuxAgentSessionURL`. Returns nil for non-cmux session URLs (e.g.
+    /// transcript-derived sessions). The JS overlay uses this to round-trip
+    /// a ghost click back to the originating terminal panel.
+    static func panelID(fromSessionURL url: URL) -> String? {
+        guard url.scheme == "cmux-agent" else { return nil }
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard let last = parts.last else { return nil }
+        return last.removingPercentEncoding ?? last
+    }
 
     /// Stable synthetic URL for a cmux-managed agent session.
     private static func cmuxAgentSessionURL(workspaceID: String, agentKey: String) -> URL {
@@ -796,7 +814,8 @@ public final class GhostRosterManager: ObservableObject {
                 tableID: motion.tableID,
                 motion: phase,
                 motionStartedAt: motion.motionStartedAt,
-                needsAttention: motion.needsAttention
+                needsAttention: motion.needsAttention,
+                panelID: Self.panelID(fromSessionURL: url)
             ))
         }
 

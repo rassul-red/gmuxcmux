@@ -344,17 +344,38 @@ final class GhostDashboardController: ObservableObject {
                 GhostDashboardController.shared.toggleFollow(workspaceID: id)
             }
         }
-        // Click on a single ghost in the room view. For now we focus the
-        // workspace as a whole — per-session focus inside the workspace
-        // (mapping `data.ghostID` → terminal panel) is a follow-up that
-        // needs a Claude-Code-session ↔ panel index.
+        // Click on a single ghost. If the payload carries a `panelID` (sent
+        // by dashboard.js for assigned ghosts), focus that exact surface
+        // inside the workspace — needed because clicking a ghost on the
+        // CURRENT workspace was a no-op when `selectProject` short-circuited
+        // on "already selected". Free wandering ghosts have no panelID; fall
+        // back to workspace-level focus.
         bridgeHost.onFocusGhost = { payload in
             #if DEBUG
-            let ghostID = (payload.data?.value as? [String: AnyHashable])?["ghostID"] as? String
-            dlog("ghost.action.focusGhost project=\(payload.projectID ?? "?") ghost=\(ghostID ?? "?")")
+            let dict = payload.data?.value as? [String: AnyHashable]
+            let ghostID = dict?["ghostID"] as? String
+            let panelStr = dict?["panelID"] as? String
+            dlog("ghost.action.focusGhost project=\(payload.projectID ?? "?") ghost=\(ghostID ?? "?") panel=\(panelStr ?? "?")")
             #endif
-            Self.dispatch(payload) { id in
-                GhostDashboardController.shared.selectProject(workspaceID: id)
+            guard let workspaceID = Self.workspaceID(from: payload) else { return }
+            let panelID: UUID? = {
+                guard let dict = payload.data?.value as? [String: AnyHashable],
+                      let raw = dict["panelID"] as? String,
+                      !raw.isEmpty else { return nil }
+                return UUID(uuidString: raw)
+            }()
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    let controller = GhostDashboardController.shared
+                    if let panelID, let tabManager = controller.boundTabManager {
+                        // focusTab handles both "switch workspace" and "select
+                        // surface within workspace" — works whether the click
+                        // is on the current room or a different one.
+                        tabManager.focusTab(workspaceID, surfaceId: panelID)
+                    } else {
+                        controller.selectProject(workspaceID: workspaceID)
+                    }
+                }
             }
         }
     }
