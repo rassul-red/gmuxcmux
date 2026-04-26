@@ -16,6 +16,11 @@
 		A8DA000015A1B2C3D4E5F608 /* GhostDashboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DA000005A1B2C3D4E5F608 /* GhostDashboard */; };
 		A8DA000016A1B2C3D4E5F608 /* DashboardActivityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000006A1B2C3D4E5F608 /* DashboardActivityGate.swift */; };
 		A8DA000017A1B2C3D4E5F608 /* DashboardFrameTimingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000007A1B2C3D4E5F608 /* DashboardFrameTimingController.swift */; };
+		A8DA000030A1B2C3D4E5F608 /* GhostDashboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000020A1B2C3D4E5F608 /* GhostDashboardController.swift */; };
+		A8DA000031A1B2C3D4E5F608 /* NewTaskSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000021A1B2C3D4E5F608 /* NewTaskSheet.swift */; };
+		A8DA000032A1B2C3D4E5F608 /* TerminalDockMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */; };
+		A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */; };
+		A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */; };
 		FE002101 /* FileExplorerRootResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002001 /* FileExplorerRootResolverTests.swift */; };
 		FE002102 /* FileExplorerStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE002002 /* FileExplorerStoreTests.swift */; };
 			A5001001 /* cmuxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001011 /* cmuxApp.swift */; };
@@ -235,6 +240,11 @@
 		A8DA000005A1B2C3D4E5F608 /* GhostDashboard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = GhostDashboard; sourceTree = "<group>"; };
 		A8DA000006A1B2C3D4E5F608 /* DashboardActivityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Performance/DashboardActivityGate.swift; sourceTree = "<group>"; };
 		A8DA000007A1B2C3D4E5F608 /* DashboardFrameTimingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Performance/DashboardFrameTimingController.swift; sourceTree = "<group>"; };
+		A8DA000020A1B2C3D4E5F608 /* GhostDashboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/GhostDashboardController.swift; sourceTree = "<group>"; };
+		A8DA000021A1B2C3D4E5F608 /* NewTaskSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Modals/NewTaskSheet.swift; sourceTree = "<group>"; };
+		A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Dock/TerminalDockMirror.swift; sourceTree = "<group>"; };
+		A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/Dock/TerminalDockView.swift; sourceTree = "<group>"; };
+		A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostDashboard/TerminalControllerSendText.swift; sourceTree = "<group>"; };
 		FE002001 /* FileExplorerRootResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerRootResolverTests.swift; sourceTree = "<group>"; };
 		FE002002 /* FileExplorerStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerStoreTests.swift; sourceTree = "<group>"; };
 			A5001000 /* cmux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cmux.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -576,6 +586,11 @@
 				A8DA000004A1B2C3D4E5F608 /* GhostDashboardLayout.swift */,
 				A8DA000006A1B2C3D4E5F608 /* DashboardActivityGate.swift */,
 				A8DA000007A1B2C3D4E5F608 /* DashboardFrameTimingController.swift */,
+				A8DA000020A1B2C3D4E5F608 /* GhostDashboardController.swift */,
+				A8DA000021A1B2C3D4E5F608 /* NewTaskSheet.swift */,
+				A8DA000022A1B2C3D4E5F608 /* TerminalDockMirror.swift */,
+				A8DA000023A1B2C3D4E5F608 /* TerminalDockView.swift */,
+				A8DA000024A1B2C3D4E5F608 /* TerminalControllerSendText.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -922,6 +937,11 @@
 				A8DA000014A1B2C3D4E5F608 /* GhostDashboardLayout.swift in Sources */,
 				A8DA000016A1B2C3D4E5F608 /* DashboardActivityGate.swift in Sources */,
 				A8DA000017A1B2C3D4E5F608 /* DashboardFrameTimingController.swift in Sources */,
+				A8DA000030A1B2C3D4E5F608 /* GhostDashboardController.swift in Sources */,
+				A8DA000031A1B2C3D4E5F608 /* NewTaskSheet.swift in Sources */,
+				A8DA000032A1B2C3D4E5F608 /* TerminalDockMirror.swift in Sources */,
+				A8DA000033A1B2C3D4E5F608 /* TerminalDockView.swift in Sources */,
+				A8DA000034A1B2C3D4E5F608 /* TerminalControllerSendText.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
