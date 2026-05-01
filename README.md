@@ -1,30 +1,32 @@
 # GMUX
 
+![GMUX preview](https://github.com/user-attachments/assets/69a4215b-caf3-40e3-85be-d0b6f34df7de)
 
+GMUX is a visual control layer for AI agents.
 
-https://github.com/user-attachments/assets/69a4215b-caf3-40e3-85be-d0b6f34df7de
+Instead of managing agent work through scattered terminals, logs, and shell commands, GMUX gives you one live workspace where agents can be seen, monitored, and directed. It is built for the next stage of AI-assisted work: many agents running in parallel, each with its own task, state, and context.
 
+## Why GMUX Exists
 
+AI agents are becoming parallel workers, but most agent workflows still look like the MS-DOS era: terminal panes, command history, scrollback, and manual tracking.
 
-It is 2026, and we are still managing AI agents like it is the MS-DOS era: terminals, commands, logs, and fragmented sessions.
+That works for one or two agents. It breaks down when you are coordinating many of them.
 
-GMUX is the transition to a GUI.
+GMUX makes agent orchestration visual. You can see which agents are running, which are blocked, which are waiting for input, and which jobs are complete without hunting through terminal output.
 
-GMUX is a graphical control layer for AI agents. Instead of juggling CLI panes, users can see, control, and coordinate many agents in one live visual workspace. Agents become visible entities: you can assign tasks, monitor progress, spot blocked work, and see when jobs are complete.
+## What It Helps With
 
-The goal is simple: make multi-agent work visual, scalable, and accessible for both technical and non-technical users.
+- Monitor many agent sessions in one place.
+- Spot blocked or idle agents quickly.
+- Track progress across projects and workspaces.
+- Reduce the cognitive load of terminal-heavy workflows.
+- Make multi-agent work easier for technical and non-technical users.
 
-## What Problem Does It Solve?
+## Project Direction
 
-CLI-based agent control creates cognitive strain. It is hard to track what every agent is doing, which ones are idle, which ones are blocked, and which tasks are finished.
+The goal is to move from CLI-first agent control to a graphical environment where agents feel like visible collaborators instead of hidden background processes.
 
-GMUX replaces terminal-heavy orchestration with a visual interface that makes agent state clear at a glance. It turns managing agents from a text-heavy technical workflow into a simple, human-friendly experience.
-
-## Why Now?
-
-AI agents are becoming parallel workers, but the way we control them is still stuck in terminal workflows. That does not scale when users are managing many agents at once.
-
-Just like Windows made computers easier to use after MS-DOS, GMUX makes agent orchestration easier after CLI-first tools.
+GMUX is not just a terminal wrapper. It is an experiment in making multi-agent work more understandable, scalable, and accessible through a live GUI.
 
 ## Setup
 
@@ -32,3 +34,11 @@ Just like Windows made computers easier to use after MS-DOS, GMUX makes agent or
 ./scripts/setup.sh
 ./scripts/reload.sh --tag cmux-gui --launch
 ```
+
+## License
+
+This repository follows the license included in [`LICENSE`](LICENSE). The upstream code is dual-licensed by Manaflow, Inc. under GPL-3.0-or-later for open source use and a commercial license for organizations that need different terms.
+
+## Fork Notice
+
+This project is a fork of the original cmux repository by Manaflow, Inc. Original copyright and license notices are preserved.
