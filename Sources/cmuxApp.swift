@@ -192,7 +192,21 @@ struct cmuxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(updateViewModel: appDelegate.updateViewModel, windowId: primaryWindowId)
+            // Three-column embedded layout: cmux workspace sidebar (left) |
+            // Ghost dashboard office grid (middle) | cmux terminal area
+            // (right). ContentView accepts a `middleColumnBuilder` and inserts
+            // it between its sidebar and terminal in the HStack layout (see
+            // ContentView.contentAndSidebarLayout).
+            ContentView(
+                updateViewModel: appDelegate.updateViewModel,
+                windowId: primaryWindowId,
+                middleColumnBuilder: {
+                    AnyView(
+                        GhostEmbeddedGridView()
+                            .frame(minWidth: 320, idealWidth: 520)
+                    )
+                }
+            )
                 .environmentObject(tabManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)
@@ -355,6 +369,16 @@ struct cmuxApp: App {
                     ) {
                         BrowserProfilePopoverDebugWindowController.shared.show()
                     }
+                    #if DEBUG
+                    Button(
+                        String(
+                            localized: "debug.menu.dashboardFrameTiming",
+                            defaultValue: "Dashboard frame timing"
+                        )
+                    ) {
+                        DashboardFrameTimingController.shared.start()
+                    }
+                    #endif
                     Button("Debug Window Controls…") {
                         DebugWindowControlsWindowController.shared.show()
                     }
@@ -712,6 +736,16 @@ struct cmuxApp: App {
 
                 splitCommandButton(title: String(localized: "menu.view.showNotifications", defaultValue: "Show Notifications"), shortcut: menuShortcut(for: .showNotifications)) {
                     showNotificationsPopover()
+                }
+
+                Divider()
+
+                // No keyboard shortcut for v1: per CLAUDE.md "Shortcut policy",
+                // any cmux-owned shortcut must round-trip through `KeyboardShortcutSettings`
+                // + Settings UI + settings.json + docs. Wiring is intentionally
+                // deferred until a follow-up PR that lands all four pieces.
+                Button(String(localized: "dashboard.menu.show", defaultValue: "Ghost Projects Dashboard")) {
+                    GhostDashboardWindowController.shared.show()
                 }
             }
         }

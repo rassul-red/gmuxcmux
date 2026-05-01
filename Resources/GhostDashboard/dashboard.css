@@ -1,0 +1,239 @@
+/* cmux Ghost Projects dashboard — isometric office scene styles. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #0a090e;
+  color: #e6e6f0;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+}
+
+.ghost-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Each tile is an isometric room with the office background image.
+   The supplied 2048x2048 pixel-art reference is already split into 4 office
+   rooms; we ship each quadrant as its own slot-specific background so the
+   2x2 grid composes one continuous environment instead of four identical
+   rooms. Slot mapping mirrors `data-slot` 0..3 = TL/TR/BL/BR. */
+.ghost-room {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: #110f17;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 200ms ease, opacity 200ms ease;
+}
+
+.ghost-room[data-slot="0"] { background-image: url('sprites/bg/AgentOfficeRoom-0.png'); }
+.ghost-room[data-slot="1"] { background-image: url('sprites/bg/AgentOfficeRoom-1.png'); }
+.ghost-room[data-slot="2"] { background-image: url('sprites/bg/AgentOfficeRoom-2.png'); }
+.ghost-room[data-slot="3"] { background-image: url('sprites/bg/AgentOfficeRoom-3.png'); }
+
+/* Pre-existing single-image background kept as the universal fallback for
+   tiles that ever render without a slot index. */
+.ghost-room:not([data-slot]) {
+  background-image: url('sprites/bg/AgentOfficeBackground.png');
+}
+
+.ghost-room.placeholder {
+  opacity: 0.45;
+  border-style: dashed;
+  filter: grayscale(0.7);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Layered z-index ladder: bg(0) < prop(1) < desk(2) < worker(3) < header(10) */
+.scene .prop   { position: absolute; z-index: 1; pointer-events: none; transform-origin: center; image-rendering: -webkit-optimize-contrast; }
+.scene .desk   { position: absolute; z-index: 2; pointer-events: none; transform-origin: center; image-rendering: -webkit-optimize-contrast; }
+.scene .worker {
+  position: absolute;
+  z-index: 3;
+  /* Re-enable pointer events on workers so hover tooltips and clicks fire
+     — the `.scene` container itself stays pointer-transparent so background
+     clicks (project selection) still pass through. */
+  pointer-events: auto;
+  cursor: pointer;
+  transform-origin: center;
+  image-rendering: -webkit-optimize-contrast;
+  transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
+  width: 22%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+/* Standing worker bobs slightly while wandering. */
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-3px); }
+}
+.scene .worker.bobbing {
+  animation: bob 0.6s ease-in-out infinite alternate;
+}
+
+/* Attention pose: red drop-shadow halo + pulse. */
+@keyframes pulse-attention {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(245, 104, 90, 0.65)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(245, 104, 90, 1.0)); }
+}
+.scene .worker.attention {
+  animation: pulse-attention 0.9s ease-in-out infinite;
+}
+
+/* Seated workers: no bob, no glow. */
+.scene .worker.seated {
+  animation: none;
+}
+
+/* Room overlay: a single capsule that shows the cmux workspace name. */
+.room-header {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.workspace-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(20, 18, 28, 0.78);
+  color: #f2f2f7;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.workspace-pill[hidden] { display: none; }
+
+/* Lifecycle gate: freeze every animation/transition inside the scene. */
+body.lifecycle-inactive .scene *,
+body.lifecycle-inactive .scene {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+/* Hover tooltip: floats next to the cursor, shows the ghost's project,
+   current state + tool, and last-activity timestamp. Single instance is
+   reused across hovers and positioned via inline left/top in pixels. */
+.ghost-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  background: rgba(15, 14, 22, 0.94);
+  color: #f2f2f7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 120px;
+  max-width: 240px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.ghost-tooltip-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.ghost-tooltip-state {
+  color: #d6d6e0;
+}
+
+.ghost-tooltip-time {
+  margin-top: 3px;
+  color: #8e8ea0;
+  font-size: 10px;
+}
+
+.ghost-tooltip-attention {
+  margin-top: 4px;
+  color: #ffb84a;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* "?" speech bubble badge — positioned above the worker, anchored to the
+   same left/top transform so it follows the ghost as it moves. The
+   triangular tail is drawn with a CSS pseudo-element. */
+.scene .ghost-attention-badge {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -52px;
+  transform: translate(-50%, -50%);
+  background: #ffb84a;
+  color: #1a1a1f;
+  border-radius: 11px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  animation: attention-bob 0.7s ease-in-out infinite alternate;
+}
+
+.scene .ghost-attention-badge::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #ffb84a;
+}
+
+.scene .ghost-attention-badge[hidden] { display: none; }
+
+@keyframes attention-bob {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-3px); }
+}
+
+/* Lifecycle gate: also pause the badge bob. */
+body.lifecycle-inactive .scene .ghost-attention-badge {
+  animation-play-state: paused !important;
+}

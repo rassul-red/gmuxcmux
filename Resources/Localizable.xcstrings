@@ -1090,461 +1090,31 @@
         }
       }
     },
-    "debug.menu.startupAppearanceDebug": {
+    "debug.menu.dashboardFrameTiming": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Startup Appearance Debug…"
+            "value": "Dashboard frame timing"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "起動時の外観デバッグ…"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.appearance.label": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance"
+            "value": "ダッシュボードのフレームタイミング"
           }
         },
-        "ja": {
+        "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "外観"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.applied.appearanceLabel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance:"
+            "value": "Час кадру панелі керування"
           }
         },
-        "ja": {
+        "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "外観:"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.applied.configLabel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Config:"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定:"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.applied.heading": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Applied"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "適用済み"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.applied.help": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reloads the running app through Ghostty config update, matching startup theme resolution without editing config files."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定ファイルを編集せず、Ghostty 設定更新で実行中のアプリを再読み込みし、起動時のテーマ解決を再現します。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.applyPreview.button": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apply Preview"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プレビューを適用"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.copySelectedConfig.button": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy Selected Config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選択中の設定をコピー"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.mode.dark": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Force Dark"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ダークを強制"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.mode.light": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Force Light"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ライトを強制"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.mode.stored": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stored App Setting"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存済みのアプリ設定"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.preview.heading": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preview"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プレビュー"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.freshInstall.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No user theme or terminal colors, so cmux applies its managed default colors."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ユーザーのテーマやターミナル色がないため、cmux の管理されたデフォルト色を適用します。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.freshInstall.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fresh Install"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新規インストール"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.realUserConfig.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loads your actual Ghostty and cmux config files."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "実際の Ghostty と cmux の設定ファイルを読み込みます。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.realUserConfig.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Real User Config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "実際のユーザー設定"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userExplicitColors.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simulates a user with direct terminal color settings and no theme."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "テーマなしでターミナル色を直接設定しているユーザーをシミュレートします。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userExplicitColors.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "User Explicit Colors"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ユーザー指定色"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userSingleTheme.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simulates a user with one Ghostty theme applied in both appearances."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ライトとダークの両方に同じ Ghostty テーマを適用しているユーザーをシミュレートします。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userSingleTheme.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "User Single Theme"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ユーザー単一テーマ"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userThemePair.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simulates a user with an explicit light/dark Ghostty theme."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ライトとダークの Ghostty テーマを明示的に設定しているユーザーをシミュレートします。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.profile.userThemePair.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "User Light/Dark Theme"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ユーザーのライト/ダークテーマ"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.realConfigFallback": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loads real user config files."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "実際のユーザー設定ファイルを読み込みます。"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.restoreRealStartup.button": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restore Real Startup"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "実際の起動設定に戻す"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.selectedConfig.heading": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selected Config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選択中の設定"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.startupConfig.label": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Startup config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "起動設定"
-          }
-        }
-      }
-    },
-    "debug.startupAppearance.window.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Startup Appearance Debug"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "起動時の外観デバッグ"
+            "value": "대시보드 프레임 타이밍"
           }
         }
       }
@@ -17272,19 +16842,121 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.messageWithCommand": {
+    "dialog.cmuxConfig.confirmCommand.message": {
       "extractionState": "manual",
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هل أنت متأكد أنك تريد تشغيل هذا الأمر؟"
+          }
+        },
+        "bs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeste li sigurni da želite pokrenuti ovu naredbu?"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Er du sikker på, at du vil køre denne kommando?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Möchten Sie diesen Befehl wirklich ausführen?"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This project action comes from:\n\n%@\n\nIt will run:\n\n%@"
+            "value": "Are you sure you want to run this command?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Estás seguro de que deseas ejecutar este comando?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Êtes-vous sûr de vouloir exécuter cette commande ?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sei sicuro di voler eseguire questo comando?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このプロジェクトアクションは次の設定から読み込まれました:\n\n%@\n\n実行内容:\n\n%@"
+            "value": "このコマンドを実行してもよろしいですか？"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 명령을 실행하시겠습니까?"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Er du sikker på at du vil kjøre denne kommandoen?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Czy na pewno chcesz uruchomić to polecenie?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tem certeza de que deseja executar este comando?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы уверены, что хотите выполнить эту команду?"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "คุณแน่ใจหรือไม่ว่าต้องการรันคำสั่งนี้?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu komutu çalıştırmak istediğinizden emin misiniz?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确定要运行此命令吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確定要執行此命令嗎？"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ви впевнені, що хочете виконати цю команду?"
           }
         }
       }
@@ -17319,7 +16991,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Run Once"
+            "value": "Run"
           }
         },
         "es": {
@@ -17343,7 +17015,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1回のみ実行"
+            "value": "実行"
           }
         },
         "ko": {
@@ -17408,23 +17080,6 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.trustAndRun": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trust and Run"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "信頼して実行"
-          }
-        }
-      }
-    },
     "dialog.cmuxConfig.confirmCommand.title": {
       "extractionState": "manual",
       "localizations": {
@@ -17455,7 +17110,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Run Project Action?"
+            "value": "Run Command"
           }
         },
         "es": {
@@ -17479,7 +17134,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロジェクトアクションを実行しますか？"
+            "value": "コマンドを実行"
           }
         },
         "ko": {
@@ -18139,40 +17794,6 @@
         }
       }
     },
-    "command.cmuxConfig.defaultClaudeCodeTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Claude Code"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Claude Code"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.defaultCodexTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Codex"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Codex"
-          }
-        }
-      }
-    },
     "command.cmuxConfig.customTitle": {
       "extractionState": "manual",
       "localizations": {
@@ -18288,142 +17909,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Власне: %@"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.newWorkspaceActionRequiresWorkspaceCommand.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ must reference a workspace command action"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ はワークスペースコマンドアクションを参照する必要があります"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.newWorkspaceCommandNotFound.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ references missing command '%@'"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ は存在しないコマンド '%@' を参照しています"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.newWorkspaceCommandRequiresWorkspace.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ '%@' must reference a workspace command"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ '%@' はワークスペースコマンドを参照する必要があります"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.schemaError.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.schemaError.fallback": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invalid cmux.json"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "無効な cmux.json"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.schemaError.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux.json Schema Error"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux.json スキーマエラー"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@: %@"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@: %@"
-          }
-        }
-      }
-    },
-    "command.cmuxConfig.issue.warning.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux.json Configuration Warning"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux.json 設定警告"
           }
         }
       }
@@ -22574,40 +22059,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відновити закриту вкладку браузера"
-          }
-        }
-      }
-    },
-    "command.reopenPreviousSession.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Session"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "セッション"
-          }
-        }
-      }
-    },
-    "command.reopenPreviousSession.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reopen Previous Session"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "前回のセッションを再度開く"
           }
         }
       }
@@ -40466,23 +39917,6 @@
         }
       }
     },
-    "menu.file.reopenPreviousSession": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reopen Previous Session"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "前回のセッションを再度開く"
-          }
-        }
-      }
-    },
     "menu.find.find": {
       "extractionState": "manual",
       "localizations": {
@@ -49607,346 +49041,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "settings.json 열기"
-          }
-        }
-      }
-    },
-    "settings.app.configWindow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Terminal Config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ターミナル設定"
-          }
-        }
-      }
-    },
-    "settings.app.configWindow.openButton": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open Config Window"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "構成ウインドウを開く"
-          }
-        }
-      }
-    },
-    "settings.app.configWindow.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open the cmux config, standalone Ghostty config, and merged preview in one utility window."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux の設定、単体の Ghostty 設定、マージ後のプレビューを 1 つのユーティリティウインドウで開きます。"
-          }
-        }
-      }
-    },
-    "settings.config.action.openEditor": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open in Editor…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "エディタで開く…"
-          }
-        }
-      }
-    },
-    "settings.config.action.reload": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reload"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再読み込み"
-          }
-        }
-      }
-    },
-    "settings.config.action.revealFinder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reveal in Finder"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finderで表示"
-          }
-        }
-      }
-    },
-    "settings.config.action.save": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存"
-          }
-        }
-      }
-    },
-    "settings.config.banner.cmux": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This is the config file cmux reads. Edit it here, then Save to reload cmux."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "これは cmux が読み込む設定ファイルです。ここで編集し、保存すると cmux が再読み込みされます。"
-          }
-        }
-      }
-    },
-    "settings.config.banner.ghostty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This file belongs to standalone Ghostty. cmux does not read it, so edits here do not affect cmux."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このファイルは単体の Ghostty 用です。cmux はこれを読み込まないため、ここでの編集は cmux に反映されません。"
-          }
-        }
-      }
-    },
-    "settings.config.banner.ghosttyMissing": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No standalone Ghostty config file was found at the preferred path. cmux still does not read standalone Ghostty config."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "優先パスに単体の Ghostty 設定ファイルが見つかりませんでした。cmux は単体の Ghostty 設定を読み込みません。"
-          }
-        }
-      }
-    },
-    "settings.config.banner.synced": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This is a generated preview of the effective config. Edit the cmux tab to change what cmux reads."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "これは実効設定の生成プレビューです。cmux が読み込む内容を変更するには cmux タブを編集してください。"
-          }
-        }
-      }
-    },
-    "settings.config.banner.syncedNoGhostty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This is a generated preview of the effective config. No standalone Ghostty config file was found, so only cmux overrides are shown."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "これは実効設定の生成プレビューです。単体の Ghostty 設定ファイルが見つからなかったため、cmux の上書き設定のみを表示しています。"
-          }
-        }
-      }
-    },
-    "settings.config.source.cmux": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux"
-          }
-        }
-      }
-    },
-    "settings.config.source.ghostty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ghostty"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ghostty"
-          }
-        }
-      }
-    },
-    "settings.config.source.label": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Config Source"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "構成ソース"
-          }
-        }
-      }
-    },
-    "settings.config.source.synced": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "synced"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "同期"
-          }
-        }
-      }
-    },
-    "settings.config.status.reloaded": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reloaded configuration from disk."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ディスクから構成を再読み込みしました。"
-          }
-        }
-      }
-    },
-    "settings.config.status.saveFailed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save the cmux config."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux 設定を保存できませんでした。"
-          }
-        }
-      }
-    },
-    "settings.config.status.saved": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saved to cmux config and reloaded."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "cmux 設定に保存し、再読み込みしました。"
-          }
-        }
-      }
-    },
-    "settings.config.windowTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "構成"
           }
         }
       }
@@ -70214,278 +69308,6 @@
         }
       }
     },
-    "shortcut.recorder.error.bareKeyNotAllowed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shortcuts must include ⌘ ⌥ ⌃ or ⇧"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ショートカットには ⌘ ⌥ ⌃ または ⇧ を含める必要があります"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.error.conflictsWithAction": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This shortcut conflicts with %@ (%@)."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このショートカットは %@（%@）と競合しています。"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.error.conflictsWithAction.swap": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This shortcut conflicts with %@ (%@). Swap shortcuts?"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このショートカットは %@（%@）と競合しています。ショートカットを入れ替えますか？"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.error.numberedShortcutRequiresDigit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use a digit from 1 through 9."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 から 9 の数字を使ってください。"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.error.reservedBySystem": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This keystroke is reserved by macOS."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このキー入力は macOS によって予約されています。"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.error.systemWideHotkeyRequiresModifier": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "System-wide hotkeys must include Command, Option, or Control."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "システム全体のホットキーには Command、Option、または Control を含める必要があります。"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.swap": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swap"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "入れ替え"
-          }
-        }
-      }
-    },
-    "shortcut.recorder.undo": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "元に戻す"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaBrightnessDown": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brightness Down"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画面の明るさを下げる"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaBrightnessUp": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brightness Up"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画面の明るさを上げる"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaMute": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mute"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "消音"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaNext": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next Track"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次のトラック"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaPlayPause": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play/Pause"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再生/一時停止"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaPrevious": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previous Track"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "前のトラック"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaVolumeDown": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Volume Down"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "音量を下げる"
-          }
-        }
-      }
-    },
-    "shortcut.key.mediaVolumeUp": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Volume Up"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "音量を上げる"
-          }
-        }
-      }
-    },
     "shortcut.previousSurface.label": {
       "extractionState": "manual",
       "localizations": {
@@ -70958,23 +69780,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Перейменувати робочу область"
-          }
-        }
-      }
-    },
-    "shortcut.reopenPreviousSession.label": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reopen Previous Session"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "前回のセッションを再度開く"
           }
         }
       }
@@ -90911,1026 +89716,888 @@
         }
       }
     },
-    "rightSidebar.mode.files": {
+    "dashboard.action.broadcast": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Files"
+            "value": "Broadcast"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ファイル"
+            "value": "ブロードキャスト"
           }
         }
       }
     },
-    "rightSidebar.mode.sessions": {
+    "dashboard.action.broadcast.v2Tooltip": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sessions"
+            "value": "Available in v2"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッション"
+            "value": "v2で利用可能"
           }
         }
       }
     },
-    "sessionIndex.agent.claude": {
+    "dashboard.action.follow": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code"
+            "value": "Follow"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code"
+            "value": "フォロー"
           }
         }
       }
     },
-    "sessionIndex.agent.codex": {
+    "dashboard.action.groupChat": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex"
+            "value": "Group Chat"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex"
+            "value": "グループチャット"
           }
         }
       }
     },
-    "sessionIndex.agent.opencode": {
+    "dashboard.action.groupChat.v2Tooltip": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "OpenCode"
+            "value": "Available in v2"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "OpenCode"
+            "value": "v2で利用可能"
           }
         }
       }
     },
-    "sessionIndex.untitled": {
+    "dashboard.action.interrupt": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Untitled session"
+            "value": "Interrupt"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無題のセッション"
+            "value": "中断"
           }
         }
       }
     },
-    "sessionIndex.scope.thisFolder": {
+    "dashboard.action.newTask": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This folder only"
+            "value": "New Task"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このフォルダのみ"
+            "value": "新しいタスク"
           }
         }
       }
     },
-    "sessionIndex.reload.tooltip": {
+    "dashboard.action.openProject": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reload sessions"
+            "value": "Open Project"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッションを再読み込み"
+            "value": "プロジェクトを開く"
           }
         }
       }
     },
-    "sessionIndex.loading": {
+    "dashboard.sidebar.projects": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scanning sessions…"
+            "value": "Projects"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッションをスキャン中…"
+            "value": "プロジェクト"
           }
         }
       }
     },
-    "sessionIndex.empty.title": {
+    "dashboard.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No sessions found"
+            "value": "Ghost Projects"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッションが見つかりません"
+            "value": "ゴーストプロジェクト"
           }
         }
       }
     },
-    "sessionIndex.empty.subtitle": {
+    "dashboard.menu.show": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sessions from Claude Code, Codex, and OpenCode will appear here."
+            "value": "Ghost Projects Dashboard"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code、Codex、OpenCode のセッションがここに表示されます。"
+            "value": "Ghost Projects ダッシュボード"
           }
         }
       }
     },
-    "sessionIndex.section.empty": {
+    "dashboard.detail.selectedProject": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No sessions"
+            "value": "Selected Project"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッションなし"
+            "value": "選択中のプロジェクト"
           }
         }
       }
     },
-    "sessionIndex.row.open": {
+    "dashboard.detail.bindPlaceholder": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open"
+            "value": "Bind in #2"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "開く"
+            "value": "#2 で接続予定"
           }
         }
       }
     },
-    "sessionIndex.row.reveal": {
+    "dashboard.detail.quickActions": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reveal in Finder"
+            "value": "Quick Actions"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Finder で表示"
+            "value": "クイックアクション"
           }
         }
       }
     },
-    "sessionIndex.row.copyPath": {
+    "dashboard.detail.wiredIn5": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy File Path"
+            "value": "Wired in #5"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ファイルパスをコピー"
+            "value": "#5 で配線予定"
           }
         }
       }
     },
-    "sessionIndex.row.openCwd": {
+    "dashboard.terminalDock.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Working Directory"
+            "value": "Terminal Dock"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "作業ディレクトリを開く"
+            "value": "ターミナルドック"
           }
         }
       }
     },
-    "sessionIndex.row.openPR": {
+    "dashboard.terminalDock.wiredIn5": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Pull Request"
+            "value": "Wired in #5"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プルリクエストを開く"
+            "value": "#5 で配線予定"
           }
         }
       }
     },
-    "sessionIndex.group.directory": {
+    "dashboard.terminalDock.attached": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By folder"
+            "value": "Attached to selected workspace."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "フォルダ別"
+            "value": "選択中のワークスペースに接続済み。"
           }
         }
       }
     },
-    "sessionIndex.group.agent": {
+    "dashboard.terminalDock.empty": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By agent"
+            "value": "Select a project to attach the terminal."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "エージェント別"
+            "value": "プロジェクトを選択するとターミナルが接続されます。"
           }
         }
       }
     },
-    "sessionIndex.directory.unknown": {
+    "dashboard.terminalDock.followingBadge": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "(no folder)"
+            "value": "Following"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "(フォルダなし)"
+            "value": "フォロー中"
           }
         }
       }
     },
-    "sessionIndex.row.resume": {
+    "dashboard.newTask.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resume in New Tab"
+            "value": "New Task"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "新しいタブで再開"
+            "value": "新しいタスク"
           }
         }
       }
     },
-    "sessionIndex.row.copyResume": {
+    "dashboard.newTask.placeholder": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy Resume Command"
+            "value": "Describe the task…"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "再開コマンドをコピー"
+            "value": "タスクを説明してください…"
           }
         }
       }
     },
-    "sessionIndex.section.noChats": {
+    "dashboard.newTask.submit": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No chats"
+            "value": "Submit"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "チャットなし"
+            "value": "送信"
           }
         }
       }
     },
-    "sessionIndex.section.showMore": {
+    "dashboard.newTask.cancel": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show more"
+            "value": "Cancel"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "もっと表示"
+            "value": "キャンセル"
           }
         }
       }
     },
-    "sessionIndex.section.showLess": {
+    "ghost.canvas.zoom.in": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show less"
+            "value": "Zoom in"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "折りたたむ"
-          }
-        }
-      }
-    },
-    "sessionIndex.section.showMoreCount": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show %lld more"
+            "value": "拡大"
           }
         },
-        "ja": {
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "あと %lld 件を表示"
-          }
-        }
-      }
-    },
-    "sessionIndex.popover.searchPlaceholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search sessions"
+            "value": "Zoom in"
           }
         },
-        "ja": {
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "セッションを検索"
-          }
-        }
-      }
-    },
-    "sessionIndex.popover.noMatches": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No matches"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一致なし"
-          }
-        }
-      }
-    },
-    "sessionIndex.popover.endOfList": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You've reached the end"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "リストの末尾に到達しました"
-          }
-        }
-      }
-    },
-    "sessionIndex.popover.searching": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Searching…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "検索中…"
-          }
-        }
-      }
-    },
-    "sessionIndex.popover.loading": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込み中…"
-          }
-        }
-      }
-    },
-    "settings.section.account": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Account"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アカウント"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Обліковий запис"
+            "value": "Zoom in"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "계정"
-          }
-        }
-      }
-    },
-    "settings.account.signedOut.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not signed in"
+            "value": "Zoom in"
           }
         },
-        "ja": {
+        "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "サインインしていません"
+            "value": "Zoom in"
           }
         },
-        "uk": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ви не ввійшли"
+            "value": "Zoom in"
           }
         },
-        "ko": {
+        "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "로그인되지 않음"
-          }
-        }
-      }
-    },
-    "settings.account.signedOut.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign in with your cmux account to enable sync across devices."
+            "value": "Zoom in"
           }
         },
-        "ja": {
+        "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux アカウントでサインインするとデバイス間で同期できます。"
+            "value": "Zoom in"
           }
         },
-        "uk": {
+        "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Увійдіть у свій обліковий запис cmux, щоб синхронізувати пристрої."
+            "value": "Zoom in"
           }
         },
-        "ko": {
+        "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux 계정으로 로그인하여 디바이스 간 동기화를 활성화하세요."
-          }
-        }
-      }
-    },
-    "settings.account.signedIn.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Signed in"
+            "value": "Zoom in"
           }
         },
-        "ja": {
+        "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "サインイン済み"
+            "value": "Zoom in"
           }
         },
-        "uk": {
+        "bs": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ви увійшли"
+            "value": "Zoom in"
           }
         },
-        "ko": {
+        "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "로그인됨"
-          }
-        }
-      }
-    },
-    "settings.account.signIn": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign In…"
+            "value": "Zoom in"
           }
         },
-        "ja": {
+        "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "サインイン…"
+            "value": "Zoom in"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom in"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom in"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom in"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Увійти…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "로그인…"
+            "value": "Zoom in"
           }
         }
       }
     },
-    "settings.account.signOut": {
+    "ghost.canvas.zoom.out": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sign Out"
+            "value": "Zoom out"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サインアウト"
+            "value": "縮小"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "bs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вийти"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "로그아웃"
+            "value": "Zoom out"
           }
         }
       }
     },
-    "settings.account.error.invalidCallback": {
+    "ghost.canvas.zoom.reset": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The sign-in callback was invalid."
+            "value": "Reset zoom"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サインインコールバックが無効です。"
+            "value": "ズームをリセット"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "bs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Невалідний зворотний виклик входу."
+            "value": "Reset zoom"
+          }
+        }
+      }
+    },
+    "ghost.canvas.zoom.level": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ズーム倍率"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "로그인 콜백이 잘못되었습니다."
-          }
-        }
-      }
-    },
-    "terminal.restore.no_snapshot": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No previous session snapshot available"
+            "value": "Zoom level"
           }
         },
-        "ja": {
+        "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "前回のセッションスナップショットがありません"
-          }
-        }
-      }
-    },
-    "settings.account.error.missingAccessToken": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Account access token is unavailable."
+            "value": "Zoom level"
           }
         },
-        "ja": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "アカウントのアクセストークンを取得できません。"
+            "value": "Zoom level"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "bs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Токен доступу до облікового запису недоступний."
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "계정 액세스 토큰을 사용할 수 없습니다."
+            "value": "Zoom level"
           }
         }
-      }
-    },
-    "rightSidebar.mode.agents": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Agents"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "エージェント"
-          }
-        }
-      }
-    },
-    "titlebar.agents.accessibilityLabel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show Agents"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "エージェントを表示"
-          }
-        }
-      }
-    },
-    "titlebar.agents.tooltip": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show agents panel"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "エージェントパネルを表示"
-          }
-        }
-      }
-    },
-    "agentsPanel.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No workspaces"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ワークスペースがありません"
-          }
-        }
-      }
-    },
-    "agentsPanel.room.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No terminals"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ターミナルがありません"
-          }
-        }
-      }
-    },
-    "agentsCanvas.empty.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "No workspaces yet" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "ワークスペースがありません" } }
-      }
-    },
-    "agentsCanvas.zoom.in": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Zoom in" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "拡大" } }
-      }
-    },
-    "agentsCanvas.zoom.out": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Zoom out" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "縮小" } }
-      }
-    },
-    "agentsCanvas.zoom.reset": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Reset zoom" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "ズームをリセット" } }
-      }
-    },
-    "agentsCanvas.empty.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Open a workspace to see its agents." } },
-        "ja": { "stringUnit": { "state": "translated", "value": "ワークスペースを開くとエージェントが表示されます。" } }
-      }
-    },
-    "agentsCanvas.slot.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "empty room" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "空き部屋" } }
-      }
-    },
-    "agentsCanvas.room.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "no agents in this room" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "この部屋にエージェントはいません" } }
-      }
-    },
-    "agentsCanvas.bubble.done": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "DONE" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "完了" } }
-      }
-    },
-    "agentsCanvas.role.section": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Role" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "ロール" } }
-      }
-    },
-    "agentsCanvas.role.builder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Builder" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "ビルダー" } }
-      }
-    },
-    "agentsCanvas.role.builder.desc": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Implements features and writes code." } },
-        "ja": { "stringUnit": { "state": "translated", "value": "機能を実装し、コードを書きます。" } }
-      }
-    },
-    "agentsCanvas.role.debugger": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Debugger" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "デバッガー" } }
-      }
-    },
-    "agentsCanvas.role.debugger.desc": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Hunts down bugs and traces failures." } },
-        "ja": { "stringUnit": { "state": "translated", "value": "バグを追跡し、失敗の原因を調査します。" } }
-      }
-    },
-    "agentsCanvas.role.orchestrator": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Orchestrator" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "オーケストレーター" } }
-      }
-    },
-    "agentsCanvas.role.orchestrator.desc": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Coordinates other agents and plans work." } },
-        "ja": { "stringUnit": { "state": "translated", "value": "他のエージェントを調整し、作業を計画します。" } }
-      }
-    },
-    "agentsCanvas.role.reviewer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Reviewer" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "レビュアー" } }
-      }
-    },
-    "agentsCanvas.role.reviewer.desc": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Reviews changes and proposes improvements." } },
-        "ja": { "stringUnit": { "state": "translated", "value": "変更をレビューし、改善を提案します。" } }
-      }
-    },
-    "agentsCanvas.status.running": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Running" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "実行中" } }
-      }
-    },
-    "agentsCanvas.status.thinking": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Thinking" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "考え中" } }
-      }
-    },
-    "agentsCanvas.status.asking": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Needs input" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "入力待ち" } }
-      }
-    },
-    "agentsCanvas.status.completed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Done" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "完了" } }
-      }
-    },
-    "debug.menu.guiMode.enable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Enable Agents Canvas (GUI Mode)" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "エージェントキャンバスを有効化 (GUIモード)" } }
-      }
-    },
-    "debug.menu.guiMode.disable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Disable Agents Canvas (GUI Mode)" } },
-        "ja": { "stringUnit": { "state": "translated", "value": "エージェントキャンバスを無効化 (GUIモード)" } }
       }
     }
   }

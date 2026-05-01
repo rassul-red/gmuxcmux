@@ -47,3 +47,9 @@ tests/visual_report.html
 # Local scratch (screenshots, etc.)
 tmp/
 tmp-*/
+
+# Local agent state (kept out of git; .omc/specs is the exception, see below)
+/.omc/*
+!/.omc/specs/
+/.openchrome/
+/.claude/scheduled_tasks.lock

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Defense-in-depth: only same-origin scripts/styles, no eval, no inline
+       handlers, no remote loads. evaluateJavaScript / WKUserScript injections
+       from Swift bypass CSP and continue to work. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>cmux · Ghost Projects</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <!-- bridge.js installs window.__ghostBridge at document-start (already
+       injected as a WKUserScript by GhostDashboardWebViewHost), but we keep
+       a tag here so tests that load the page directly via file:// also pick
+       it up. dashboard.js subscribes to the bridge events afterwards. -->
+  <script src="bridge.js"></script>
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <div class="ghost-grid" id="ghost-grid"></div>
+</body>
+</html>
