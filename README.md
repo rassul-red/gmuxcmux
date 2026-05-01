@@ -1,6 +1,6 @@
 # GMUX
 
-![GMUX preview](https://github.com/user-attachments/assets/69a4215b-caf3-40e3-85be-d0b6f34df7de)
+https://github.com/user-attachments/assets/69a4215b-caf3-40e3-85be-d0b6f34df7de
 
 GMUX is a visual control layer for AI agents.
 
