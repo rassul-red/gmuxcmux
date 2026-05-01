@@ -1,5 +1,11 @@
 # GMUX
 
+
+
+https://github.com/user-attachments/assets/69a4215b-caf3-40e3-85be-d0b6f34df7de
+
+
+
 It is 2026, and we are still managing AI agents like it is the MS-DOS era: terminals, commands, logs, and fragmented sessions.
 
 GMUX is the transition to a GUI.
